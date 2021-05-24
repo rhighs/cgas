@@ -3,15 +3,22 @@ from wsgiref.simple_server import make_server
 from pyramid.config import Configurator
 from pyramid.response import Response
 
-api_id= 5558646
-api_hash = "30d3b4c9958fd165911d09254124d3bc"
+import json
 
-pyro_server = Client("my_account", api_id, api_hash)
+with open("keys.json", "r") as myfile:
+    data=myfile.read()
+
+obj = json.loads(data)
+
+api_id = obj["api_id"]
+api_hash = str(obj["api_hash"])
+
+pyro_client = Client("my_account", api_id, api_hash)
 
 def index(request):
-    pyro_server.start()
-    pyro_server.send_photo("me", "here.png")
-    pyro_server.stop()
+    pyro_client.start()
+    pyro_client.send_photo("me", "here.png")
+    pyro_client.stop()
     return Response("message sent!")
 
 if __name__ == '__main__':
