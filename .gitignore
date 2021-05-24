@@ -1,4 +1,4 @@
-./keys.json
-./sessions
-./*.session
+keys.json
+sessions
+*.session
 
