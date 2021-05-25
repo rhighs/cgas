@@ -3,16 +3,17 @@ from wsgiref.simple_server import make_server
 from pyramid.config import Configurator
 from pyramid.response import Response
 from pyramid.view import view_config
-
+from .pyro_wrapper import PyroWrap
 import json
 
 with open("keys.json", "r") as myfile:
     data=myfile.read()
 
 obj = json.loads(data)
-
 api_id = obj["api_id"]
 api_hash = str(obj["api_hash"])
+
+pyro = PyroWrap(api_id, api_hash, workdir="./sessions")
 
 pyro_client = Client("my_account", api_id, api_hash)
 
