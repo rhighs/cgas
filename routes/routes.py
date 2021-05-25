@@ -1,9 +1,14 @@
-def class RoutesConfigurator(configurator):
-    routes = [
+from ..controllers import HomeController
+
+def class RoutesConfigurator:
+
+    def __init__(self, configurator):
+        self.configurator = configurator
+        self.routes = [
             ("index", "/"),
             ("signin", "/signin")
             ]
 
-    def setup_routes():
-        for name, path in routes:
-            configurator.add_route()
+    def setup_routes(self):
+        for name, path in self.routes:
+            self.configurator.add_route()

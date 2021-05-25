@@ -2,16 +2,19 @@ from pyrogram import Client, filters
 from pathlib import Path
 import os.path
 
-def class PyroWrap():
+def class PyroWrap:
+    def __init__(self):
+        return
+
     def create_session(account_name, api_id, api_hash, phone_number):
         client = Client(account_name, api_id, api_hash)
 
-    def send_photo_sm(account_name):
+    def send_private_message(account_name, message):
         if !is_authenticated(account_name):
             return
         client = Client(account_name)
         client.start()
-        client.send_photo("me", "sample.png")
+        client.send_message("me", message)
         client.stop()
 
     def is_authenticated(account_name):
