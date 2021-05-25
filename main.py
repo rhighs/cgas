@@ -2,6 +2,7 @@ from pyrogram import Client, filters
 from wsgiref.simple_server import make_server
 from pyramid.config import Configurator
 from pyramid.response import Response
+from pyramid.view import view_config
 
 import json
 
@@ -15,16 +16,23 @@ api_hash = str(obj["api_hash"])
 
 pyro_client = Client("my_account", api_id, api_hash)
 
+@view_config(route_name='index', renderer='json')
 def index(request):
-    pyro_client.start()
-    pyro_client.send_photo("me", "here.png")
-    pyro_client.stop()
-    return Response("message sent!")
+    #pyro_client.start()
+    #pyro_client.send_message("me", "message from api server")
+    #pyro_client.stop()
+
+    return { "isSuccess" : True }
+
+@view_config(route_name='values', renderer='json')
+def values(request):
+    return { "message" : [1,2,3,4,5] }
 
 if __name__ == '__main__':
     with Configurator() as config:
         config.add_route('index', '/')
-        config.add_view(index, route_name="index")
+        config.add_route('values', '/values')
+        config.scan()
         app = config.make_wsgi_app()
     server = make_server('0.0.0.0', 5000, app)
     server.serve_forever()
