@@ -6,7 +6,8 @@ def class RoutesConfigurator:
         self.configurator = configurator
         self.routes = [
             ("index", "/"),
-            ("signin", "/signin")
+            ("signin", "/signin"),
+            ("sendCode", "/sendCode")
             ]
 
     def setup_routes(self):
