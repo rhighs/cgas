@@ -2,10 +2,14 @@ from wsgiref.simple_server import make_server
 from pyramid.config import Configurator
 from . import main
 
-PORT=5000
-HOST_IP="0.0.0.0" # -> 127.0.0.1
-
-if __name__ == '__main__':
-    app = main(settings=None)
-    server = make_server(HOST_IP, PORT, app)
-    server.serve_forever()
+class PGApiServer:
+    def __init__(self, api_id, api_hash, host_ip, port):
+        self.api_id = api_id
+        self.api_hash = api_hash
+        self.host_ip = host_ip
+        self.port = port
+    
+    def run(self):
+        pyramid_app = main(settings=None)
+        server = make_server(self.host_ip, self.port, app=pyramid_app)
+        server.serve_forever()
