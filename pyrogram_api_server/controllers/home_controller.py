@@ -1,12 +1,12 @@
 from pyramid_handlers import action
 from pyramid.response import Response
-from . import pyro_wrap
+import pyrogram_api_server
 
-def class HomeController(object):
+class HomeController(object):
     __autoexpose__ = None
 
     def __init__(self, request):
-        self.pyro = pyro_wrap
+        self.pyro = pyrogram_api_server.pyro_wrap
         self.request = request
         
     @action(name="addAccount", renderer="json", request_method="POST")
@@ -14,7 +14,7 @@ def class HomeController(object):
         return { "does" : "nothing"}
 
     @action(name="sendCode", renderer="json", request_method="POST")
-    def send_code(self)
+    def send_code(self):
         phone_number = self.request.POST["phoneNumber"]
         try:
             result = self.pyro.send_code(phone_number) 

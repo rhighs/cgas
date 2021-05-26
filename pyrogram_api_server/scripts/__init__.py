@@ -1,1 +1,1 @@
-from .pyrogram_wrappper import PyroWrap
+from .pyrogram_wrapper import PyroWrap

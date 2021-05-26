@@ -1,2 +1,4 @@
 pyramid=2.0
+pyramid_handlers=0.5 
 pyrogram=1.2.9
+

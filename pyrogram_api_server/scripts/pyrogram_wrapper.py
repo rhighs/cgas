@@ -3,17 +3,17 @@ from pathlib import Path
 import os.path
 import pyrogram.types as types
 
-def class PyroWrap:
+class PyroWrap:
     def __init__(self, api_id, api_hash, workdir):
         self.workdir = workdir
         self.api_ip = api_id
-        slef.api_hash = api_hash
+        self.api_hash = api_hash
 
-    def create_client(account_name, phone_number):
-        client = Client(account_name, api_id = self.api_id, api_hash = self.api_hash, workdir)
+    def create_client(self, account_name, phone_number):
+        client = Client(account_name, api_id = self.api_id, api_hash = self.api_hash, workdir=self.workdir)
 
     def send_private_message(phone_number, message):
-        if !is_authenticated(phone_number):
+        if is_authenticated(phone_number) == False:
             return
         client = Client(phone_number)
         client.start()
@@ -21,7 +21,7 @@ def class PyroWrap:
         client.stop()
 
     def send_code(self, phone_number):
-        if !is_authenticated(phone_number):
+        if is_authenticated(phone_number) == False:
             raise Exception("Invalid phone number, not authenticated")
         client = Client(phone_number)
         client.start()
@@ -37,7 +37,7 @@ def class PyroWrap:
         return code
 
     def signin(self, phone_number, phone_code_hash, phone_code):
-        if !is_authenticated(phone_number):
+        if is_authenticated(phone_number) == False:
             raise Exception("Invalid phone number, not authenticated")
         client = Client(phone_number)
         client.start()
