@@ -1,7 +1,6 @@
-from ..controllers import HomeController
+from pyrogram_api_server.controller import HomeController
 
 def class RoutesConfigurator:
-
     def __init__(self, configurator):
         self.configurator = configurator
         self.routes = [

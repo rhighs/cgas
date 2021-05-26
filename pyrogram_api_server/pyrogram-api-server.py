@@ -4,6 +4,7 @@ from pyramid.config import Configurator
 from pyramid.response import Response
 from pyramid.view import view_config
 from .pyro_wrapper import PyroWrap
+from . import main
 import json
 
 with open("keys.json", "r") as myfile:
@@ -19,10 +20,6 @@ pyro_client = Client("my_account", api_id, api_hash)
 
 @view_config(route_name='index', renderer='json')
 def index(request):
-    #pyro_client.start()
-    #pyro_client.send_message("me", "message from api server")
-    #pyro_client.stop()
-
     return { "isSuccess" : True }
 
 @view_config(route_name='values', renderer='json')
@@ -35,5 +32,6 @@ if __name__ == '__main__':
         config.add_route('values', '/values')
         config.scan()
         app = config.make_wsgi_app()
+    app = main(settings=None)
     server = make_server('0.0.0.0', 5000, app)
     server.serve_forever()
