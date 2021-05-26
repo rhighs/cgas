@@ -46,17 +46,16 @@ def class PyroWrap:
             result = client.signin(phone_number, phone_code_hash, phone_code)
         except:
             client.stop()
-            raise Exception("Ivalid arguements or password needed")
+            raise Exception("Ivalid arguments or password needed")
 
             if type(result) is types.TermsOfService:
                 client.stop()
-                raise Exception("Ivalid arguements or password needed") #temporary, assume every number to be logged already
+                raise Exception("Ivalid arguments or password needed") #temporary, assume every number to be logged already
 
         client.stop()
         return result #should be of type User
-        
 
-    def is_authenticated(phone_number):
+    def is_authenticated(self, phone_number):
         phone_number = phone_number[1:] 
-        session_file = Path(f"{workdir}/{phone_number}.session")
+        session_file = Path(f"{self.workdir}/{phone_number}.session")
         return session_file.exists()
