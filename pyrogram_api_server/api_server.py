@@ -28,6 +28,6 @@ class ApiServer:
 
 def getPyroWrapper():
     if(type(pyro_wrap) is None):
-        raise Exception("pyro is none")
+        raise Exception("pyro is nonetype")
 
     return pyro_wrap
