@@ -4,10 +4,15 @@ import os.path
 import pyrogram.types as types
 
 class PyroWrap:
-    def __init__(self, api_id, api_hash, workdir):
+    def __init__(self, api_id, api_hash, workdir, createNow=False):
         self.workdir = workdir
         self.api_id = api_id
         self.api_hash = api_hash
+        if(createNow):
+            try:
+                self.client = Client("pyrogram_api_server")
+            except:
+                raise Exception("Failed creating client, invalid id or api hash")
 
     def create_client(self, account_name):
         self.client = Client(account_name)
