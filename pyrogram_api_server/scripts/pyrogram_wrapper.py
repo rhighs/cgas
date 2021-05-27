@@ -12,8 +12,8 @@ class PyroWrap:
     def create_client(self, account_name):
         self.client = Client(account_name)
         self.client.api_id = self.api_id
-        self.client.api_hash= self.api_hash
-        self.client.workdir= self.workdir
+        self.client.api_hash = self.api_hash
+        self.client.workdir = self.workdir
 
     def send_private_message(self, phone_number, message):
         if self.is_authenticated(phone_number) == False:
@@ -34,7 +34,7 @@ class PyroWrap:
             code = client.send_code(phone_number)
         except:
             client.stop()
-            raise Exception("Invalid phone number")
+            return False
 
         client.stop()
         return code
@@ -49,11 +49,11 @@ class PyroWrap:
             result = client.signin(phone_number, phone_code_hash, phone_code)
         except:
             client.stop()
-            raise Exception("Ivalid arguments or password needed")
+            return False
 
-            if type(result) is types.TermsOfService:
-                client.stop()
-                raise Exception("Ivalid arguments or password needed") #temporary, assume every number to be logged already
+        if type(result) is types.TermsOfService:
+            client.stop()
+            return False
 
         client.stop()
         return result #should be of type User

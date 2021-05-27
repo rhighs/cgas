@@ -17,9 +17,8 @@ class HomeController(object):
     @action(name="sendCode", renderer="json", request_method="POST")
     def send_code(self):
         phone_number = self.request.POST["phoneNumber"]
-        try:
-            result = self.pyro.send_code(phone_number) 
-        except:
+        result = self.pyro.send_code(phone_number) 
+        if(result == False):
             return { "isSuccess": False, "message" : "Invalid phone number" }
         return { "isSuccess" : True, "sentCode" : result }
 
@@ -28,9 +27,8 @@ class HomeController(object):
         phone_number = self.request.POST["phoneNumber"]
         phone_code_hash = self.request.POST["phoneCodeHash"]
         phone_code = self.request.POST["phoneCode"]
-        try: 
-            result = self.pyro.signin(phone_number, phone_code_hash, phone_code)
-        except:
+        result = self.pyro.signin(phone_number, phone_code_hash, phone_code)
+        if(result == False):
             return { "isSuccess" : False, "message" : "Could not signin"}
         return { "isSuccess" : True, "userData": result }
 
