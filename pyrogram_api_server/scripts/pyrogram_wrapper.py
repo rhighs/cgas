@@ -6,22 +6,25 @@ import pyrogram.types as types
 class PyroWrap:
     def __init__(self, api_id, api_hash, workdir):
         self.workdir = workdir
-        self.api_ip = api_id
+        self.api_id = api_id
         self.api_hash = api_hash
 
-    def create_client(self, account_name, phone_number):
-        client = Client(account_name, api_id = self.api_id, api_hash = self.api_hash, workdir=self.workdir)
+    def create_client(self, account_name):
+        self.client = Client(account_name)
+        self.client.api_id = self.api_id
+        self.client.api_hash= self.api_hash
+        self.client.workdir= self.workdir
 
-    def send_private_message(phone_number, message):
-        if is_authenticated(phone_number) == False:
+    def send_private_message(self, phone_number, message):
+        if self.is_authenticated(phone_number) == False:
             return
-        client = Client(phone_number)
-        client.start()
-        client.send_message("me", message)
-        client.stop()
+        self.client = Client(phone_number)
+        self.client.start()
+        self.client.send_message("me", message)
+        self.client.stop()
 
     def send_code(self, phone_number):
-        if is_authenticated(phone_number) == False:
+        if self.is_authenticated(phone_number) == False:
             raise Exception("Invalid phone number, not authenticated")
         client = Client(phone_number)
         client.start()
@@ -37,7 +40,7 @@ class PyroWrap:
         return code
 
     def signin(self, phone_number, phone_code_hash, phone_code):
-        if is_authenticated(phone_number) == False:
+        if self.is_authenticated(phone_number) == False:
             raise Exception("Invalid phone number, not authenticated")
         client = Client(phone_number)
         client.start()

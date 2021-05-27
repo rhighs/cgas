@@ -20,7 +20,14 @@ class ApiServer:
         self.api_hash = api_hash
     
     def run(self):
-        pyramid_app = configure(settings=None)
+        global pyro_wrap
         pyro_wrap = PyroWrap(api_id = self.api_id, api_hash=self.api_hash, workdir="./settings")
+        pyramid_app = configure(settings=None)
         server = make_server(self.host_ip, self.port, app=pyramid_app)
         server.serve_forever()
+
+def getPyroWrapper():
+    if(type(pyro_wrap) is None):
+        raise Exception("pyro is none")
+
+    return pyro_wrap

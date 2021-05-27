@@ -6,12 +6,13 @@ class HomeController(object):
     __autoexpose__ = None
 
     def __init__(self, request):
-        self.pyro = pyrogram_api_server.pyro_wrap
         self.request = request
         
     @action(name="addAccount", renderer="json", request_method="POST")
-    def add_account(self, request):
-        return { "does" : "nothing"}
+    def add_account(self):
+        name = self.request.PORT["accountName"]
+        success = pyrogram_api_server.getPyroWrapper().create_client(name);
+        return { "message": f"Account -> {name} created" } if success else { "message" : "Account not created" }
 
     @action(name="sendCode", renderer="json", request_method="POST")
     def send_code(self):
@@ -35,4 +36,4 @@ class HomeController(object):
 
     @action(name="sendPrivateMessage", renderer="json", request_method="POST")
     def send_private_message(self):
-        self.pyro.send_private_message(request.POST["phoneNumber"], request.POST["message"])
+        self.pyro.send_private_message(self.request.POST["phoneNumber"], self.request.POST["message"])
