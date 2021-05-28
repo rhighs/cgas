@@ -1,4 +1,4 @@
-from pyrogram_api_server.models import DEFAULT_FAILURE, SUCCESS_KEY, MESSAGE_KEY, DATA_KEY
+from .constants import SUCCESS_KEY, MESSAGE_KEY, DATA_KEY, DEFAULT_FAILURE
 from pyrogram.types             import User
 
 class UserModels:

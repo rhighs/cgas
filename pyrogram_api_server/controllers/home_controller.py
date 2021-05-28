@@ -12,7 +12,7 @@ class HomeController(object):
     def __init__(self, request: Request):
         self.request = request
 
-    @action(name="authorize", renderer="json", request_method="POST") 
+    @action(name="changeApiKeys", renderer="json", request_method="POST") 
     def authorize(self):
         api_id = self.request.POST["api_id"]
         api_hash = self.request.POST["api_hash"]
@@ -23,11 +23,11 @@ class HomeController(object):
             return HomeModels.failure(message=f"Exception occurred --> {str(e)}")
         return HomeModels.success(message="Wrapper created!")
         
-    @action(name="addAccount", renderer="json", request_method="POST")
+    @action(name="addSession", renderer="json", request_method="POST")
     def add_account(self):
-        name = self.request.POST["accountName"] 
-        pyrogram_api_server.getPyroWrapper().create_client(name);
-        return HomeModels.success(message=f"Account -> {name} created.")
+        phoneNumber = self.request.POST["phoneNumber"][1:]
+        pyrogram_api_server.getPyroWrapper().create_session(phoneNumber);
+        return HomeModels.success(message=f"Session with: {phoneNumber} created.")
 
     @action(name="sendCode", renderer="json", request_method="POST")
     def send_code(self):
@@ -42,7 +42,7 @@ class HomeController(object):
         phone_number = self.request.POST["phoneNumber"][1:]
         phone_code_hash = self.request.POST["phoneCodeHash"]
         phone_code = self.request.POST["phoneCode"]
-        result = self.pyro.signin(phone_number, phone_code_hash, phone_code)
+        result = pyrogram_api_server.getPyroWrapper().signin(phone_number, phone_code_hash, phone_code)
         if(result == False):
             return HomeModels.failure("Could not signin.")
         return UserModels.userDetails(result)

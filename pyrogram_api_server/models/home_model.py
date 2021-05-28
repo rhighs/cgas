@@ -1,5 +1,5 @@
 from os import stat
-from pyrogram_api_server.models import DEFAULT_SUCCESS, SUCCESS_KEY, MESSAGE_KEY, DEFAULT_FAILURE, SENT_CODE_KEY
+from .constants import DEFAULT_SUCCESS, SUCCESS_KEY, MESSAGE_KEY, DEFAULT_FAILURE, SENT_CODE_KEY
 
 class HomeModels:
 
