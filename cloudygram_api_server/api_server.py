@@ -1,8 +1,8 @@
-from pyrogram_api_server.controllers    import HomeController
-from pyrogram_api_server.controllers    import UserController
+from cloudygram_api_server.controllers    import HomeController
+from cloudygram_api_server.controllers    import UserController
 from wsgiref.simple_server              import make_server
 from pyramid.config                     import Configurator
-from pyrogram_api_server.scripts        import PyroWrap
+from cloudygram_api_server.scripts        import PyroWrap
 
 pyro_wrap = None
 

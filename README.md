@@ -1,14 +1,14 @@
 
 ## What's this
-Pyrogram-api-server is a basic web server which sole purpose is to serve pyrogram's basic functionalities.
+Cloudygram-api-server is a basic web server which sole purpose is to serve telethon's basic functionalities.
 this way any desired programming language gains access to MTProto Telegram's features, via a fast and reliable python module.
 
-For more info about pyrogram visit [pyrogram's repo.](https://github.com/pyrogram)
+For more info about telethon visit [telethon's repo.](https://github.com/LonamiWebs/Telethon)
 
 ## Cloning and running
 ```bash
-$ git clone https://github.com/skurob/pyrogram-api-server
-$ cd pyrogram-api-server
+$ git clone https://github.com/skurob/cloudygram-api-server
+$ cd cloudygram-api-server
 $ pip3 install -r requirements.txt
 $ python3 main.py
 
@@ -25,7 +25,7 @@ Before actually running the application make sure to create a keys.json file in 
 To get your api keys simply go to [my.telegram.org](https://my.telegram.org/auth?to=apps)
 
 ## Contributing
-This project does NOT aim at becoming a 1:1 pyrogram API but rather aims at the essentials only, if you have any suggestion
+This project does NOT aim at becoming a 1:1 Telethon API but rather aims at the essentials only, if you have any suggestion
 pull requests are welcome.
 For major changes, please open an issue first to discuss what you would like to change.
 

@@ -9,7 +9,12 @@ class PyroWrap:
         self.workdir = workdir
         self.api_id = api_id
         self.api_hash = api_hash
-        self.cc = lambda phone_number: Client(api_id=self.api_id, api_hash=self.api_hash, phone_number=phone_number, session_name=phone_number)
+        self.client = None
+        self.cc = lambda phone_number: Client(test_mode=True,
+                                              api_id=self.api_id,
+                                              api_hash=self.api_hash,
+                                              phone_number=phone_number,
+                                              session_name=phone_number)
 
     def send_private_message(self, phone_number, message):
         if not self.is_authenticated(phone_number):
@@ -29,12 +34,15 @@ class PyroWrap:
             raise Exception("Invalid phone number, not authenticated")
         client = self.cc(phone_number) 
         client.connect()
+        client.initialize()
         try:
             code = client.send_code(phone_number)
         except Exception as e :
             client.disconnect()
             return PyroModels.send_code_failure(str(e))
+        client.terminate()
         client.disconnect()
+            
         return code.phone_code_hash
 
     def signin(self, phone_number, phone_code_hash, phone_code):
