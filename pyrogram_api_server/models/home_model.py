@@ -16,7 +16,7 @@ class HomeModels:
     def failure(message=None):
         if message != None:
             return {
-                SUCCESS_KEY : True,
+                SUCCESS_KEY : False,
                 MESSAGE_KEY : message
             }
         return DEFAULT_FAILURE

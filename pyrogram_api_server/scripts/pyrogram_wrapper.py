@@ -1,7 +1,8 @@
-from pyrogram   import Client
-from pathlib    import Path
-from pyrogram   import types
-from os         import path
+from pyrogram                   import Client
+from pathlib                    import Path
+from pyrogram                   import types
+from os                         import path
+from pyrogram_api_server.models import PyroModels
 
 class PyroWrap:
     def __init__(self, api_id, api_hash, workdir):
@@ -27,9 +28,11 @@ class PyroWrap:
         if not self.is_authenticated(phone_number):
             raise Exception("Invalid phone number, not authenticated")
         client = self.cc(phone_number) 
+        client.connect()
         try:
             code = client.send_code(phone_number)
-        except:
+        except Exception as e :
+            print(str(e))
             client.disconnect()
             return False
         client.disconnect()
@@ -41,15 +44,15 @@ class PyroWrap:
         client = self.cc(phone_number)
         client.connect()
         try:
-            result = client.signin(phone_number, phone_code_hash, phone_code)
-        except:
+            result: types.SentCode = client.sign_in(phone_number, phone_code_hash, phone_code)
+        except Exception as e:
             client.disconnect()
-            return False
+            return PyroModels.sing_in_failure(str(e))
         if type(result) is types.TermsOfService:
             client.disconnect()
-            return False
+            return PyroModels.sing_in_failure("Requires terms of service acceptance")
         client.disconnect()
-        return result #should be of type User
+        return result #of type User
 
     def get_me(self, phone_number):
         if not self.is_authenticated(phone_number):
