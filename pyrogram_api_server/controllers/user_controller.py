@@ -14,7 +14,7 @@ class UserController:
         try:
             user = pyrogram_api_server.getPyroWrapper().get_me(phone_number)
         except Exception as e: 
-            return { "state" : "exception occurred"}
+            return UserModels.failure(message=f"Exception occurred --> {str(e)}")
         return UserModels.userDetails(user)
 
     @action(name="uploadFile", renderer="json", request_method="GET")

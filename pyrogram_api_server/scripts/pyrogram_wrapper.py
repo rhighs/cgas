@@ -1,7 +1,7 @@
-from pyrogram import Client, filters, session
-from pathlib import Path, PureWindowsPath
-import os.path
-import pyrogram.types as types
+from pyrogram   import Client
+from pathlib    import Path
+from pyrogram   import types
+from os         import path
 
 class PyroWrap:
     def __init__(self, api_id, api_hash, workdir, createNow=False):
