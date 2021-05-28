@@ -34,8 +34,8 @@ class HomeController(object):
     def send_code(self):
         phone_number = self.request.POST["phoneNumber"][1:]
         result = pyrogram_api_server.getPyroWrapper().send_code(phone_number) 
-        if(result == False):
-            return HomeModels.failure("Error sending code")
+        if type(result) is dict and SUCCESS_KEY in result:
+            return result
         return HomeModels.sent_code(result)
 
     @action(name="signin", renderer="json", request_method="POST")
