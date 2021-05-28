@@ -28,7 +28,7 @@ class HomeController(object):
 
     @action(name="sendCode", renderer="json", request_method="POST")
     def send_code(self):
-        phone_number = self.request.POST["phoneNumber"]
+        phone_number = self.request.POST["phoneNumber"][1:]
         result = self.pyro.send_code(phone_number) 
         if(result == False):
             return { "isSuccess": False, "message" : "Invalid phone number" }
@@ -36,14 +36,10 @@ class HomeController(object):
 
     @action(name="signin", renderer="json", request_method="POST")
     def signin(self):
-        phone_number = self.request.POST["phoneNumber"]
+        phone_number = self.request.POST["phoneNumber"][1:]
         phone_code_hash = self.request.POST["phoneCodeHash"]
         phone_code = self.request.POST["phoneCode"]
         result = self.pyro.signin(phone_number, phone_code_hash, phone_code)
         if(result == False):
             return { "isSuccess" : False, "message" : "Could not signin"}
         return { "isSuccess" : True, "userData": result }
-
-    @action(name="sendPrivateMessage", renderer="json", request_method="POST")
-    def send_private_message(self):
-        self.pyro.send_private_message(self.request.POST["phoneNumber"], self.request.POST["message"])
