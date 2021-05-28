@@ -25,10 +25,10 @@ class UserModels:
     def failure(message=None):
         if message != None:
             return {
-                success_key: False
+                success_key: False,
+                message_key: message
             }
         return {
-            success_key: False,
-            message_key: message
+            success_key: False
         }
 

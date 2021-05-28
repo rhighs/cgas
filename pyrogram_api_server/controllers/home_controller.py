@@ -1,12 +1,13 @@
 from pyramid_handlers import action
 from pyramid.response import Response
+from pyramid.request import Request
 from pyrogram_api_server.scripts import PyroWrap
 import pyrogram_api_server
 
 class HomeController(object):
     __autoexpose__ = None
 
-    def __init__(self, request):
+    def __init__(self, request: Request):
         self.request = request
 
     @action(name="authorize", renderer="json", request_method="POST") 
@@ -22,7 +23,7 @@ class HomeController(object):
         
     @action(name="addAccount", renderer="json", request_method="POST")
     def add_account(self):
-        name = self.request.PORT["accountName"]
+        name = self.request.POST["accountName"] 
         success = pyrogram_api_server.getPyroWrapper().create_client(name);
         return { "message": f"Account -> {name} created" } if success else { "message" : "Account not created" }
 
