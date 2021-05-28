@@ -1,4 +1,5 @@
 from pyrogram_api_server.controllers    import HomeController
+from pyrogram_api_server.controllers    import UserController
 from wsgiref.simple_server              import make_server
 from pyramid.config                     import Configurator
 from pyrogram_api_server.scripts        import PyroWrap
@@ -9,6 +10,7 @@ def configure(**settings):
     with Configurator(settings=settings) as config:
         config.include('pyramid_handlers')
         config.add_handler("home", "/{action}", handler=HomeController)
+        config.add_handler("user", "/user/{phoneNumber}/{action}", handler=UserController)
         config.scan()
     return config.make_wsgi_app()
 
