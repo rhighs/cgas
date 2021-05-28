@@ -32,11 +32,10 @@ class PyroWrap:
         try:
             code = client.send_code(phone_number)
         except Exception as e :
-            print(str(e))
             client.disconnect()
-            return False
+            return PyroModels.send_code_failure(str(e))
         client.disconnect()
-        return code
+        return code.phone_code_hash
 
     def signin(self, phone_number, phone_code_hash, phone_code):
         if not self.is_authenticated(phone_number):
