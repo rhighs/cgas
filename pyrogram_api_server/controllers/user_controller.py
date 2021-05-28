@@ -12,16 +12,15 @@ class UserController:
     def user_info(self):
         phone_number = self.request.matchdict["phoneNumber"][1:] #remove + at the beginning
         try:
-            result = pyrogram_api_server.getPyroWrapper().get_me(phone_number)
+            user = pyrogram_api_server.getPyroWrapper().get_me(phone_number)
         except Exception as e: 
             return { "state" : "exception occurred"}
-        return { "username" : result.username, "phoneNumber" : result.phone_number, "lastOnline" : result.last_online_date }
+        return UserModels.userDetails(user)
 
     @action(name="uploadFile", renderer="json", request_method="GET")
     def upload_file(self):
         phone_number = self.request.matchdict["phoneNumber"][1:] #remove + at the beginning
         file_path = self.request.GET("filePath")
-
         try:
             result = pyrogram_api_server.getPyroWrapper().upload_file(phone_number, file_path)
         except Exception as e:
