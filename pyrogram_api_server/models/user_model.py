@@ -1,44 +1,39 @@
-from pyrogram.types import User
-
-success_key = "isSuccess"
-data_key = "data"
-message_key = "message"
+from pyrogram_api_server.models import DEFAULT_FAILURE, SUCCESS_KEY, MESSAGE_KEY, DATA_KEY
+from pyrogram.types             import User
 
 class UserModels:
     @staticmethod
     def success(message=None, data=None):
         if message != None and data != None:
             return {
-                success_key : True,
-                message_key : message,
-                data_key : data
+                SUCCESS_KEY : True,
+                MESSAGE_KEY : message,
+                DATA_KEY : data
             }
         elif message != None:
             return {
-                success_key : True,
-                message_key : message,
+                SUCCESS_KEY : True,
+                MESSAGE_KEY : message,
             }
         return {
-            success_key : True,
-            data_key : data,
+            SUCCESS_KEY : True,
+            DATA_KEY : data,
         }
 
     @staticmethod
     def failure(message=None):
         if message != None:
             return {
-                success_key: False,
-                message_key: message
+                SUCCESS_KEY: False,
+                MESSAGE_KEY: message
             }
-        return {
-            success_key: False
-        }
+        return DEFAULT_FAILURE
 
     @staticmethod
     def userDetails(userDetails: User):
         return {
-            success_key: True,
-            data_key: {
+            SUCCESS_KEY: True,
+            DATA_KEY: {
                 "userId" : userDetails.id,
                 "username" : userDetails.username,
                 "firstName" : userDetails.first_name,
