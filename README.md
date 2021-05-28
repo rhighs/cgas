@@ -11,7 +11,18 @@ $ git clone https://github.com/skurob/pyrogram-api-server
 $ cd pyrogram-api-server
 $ pip3 install -r requirements.txt
 $ python3 main.py
+
 ```
+
+Before actually running the application make sure to create a keys.json file in the root folder, containing the following:
+
+```json
+{
+    "api_id": <your_api_id>,
+    "api_hash": <your_api_hash>
+}
+```
+To get your api keys simply go to [my.telegram.org](https://my.telegram.org/auth?to=apps)
 
 ## Contributing
 This project does NOT aim at becoming a 1:1 pyrogram API but rather aims at the essentials only, if you have any suggestion
