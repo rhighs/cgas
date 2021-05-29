@@ -1,6 +1,6 @@
-from .constants import *
+from .constants import SUCCESS_KEY, MESSAGE_KEY
 
-class PyroModels:
+class TtModels:
     @staticmethod
     def sing_in_failure(message):
         return {

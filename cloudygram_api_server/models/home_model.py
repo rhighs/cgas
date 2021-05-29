@@ -2,7 +2,6 @@ from os import stat
 from .constants import DEFAULT_SUCCESS, SUCCESS_KEY, MESSAGE_KEY, DEFAULT_FAILURE, SENT_CODE_KEY
 
 class HomeModels:
-
     @staticmethod
     def success(message=None):
         if message != None:

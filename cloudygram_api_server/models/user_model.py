@@ -1,5 +1,5 @@
-from .constants import SUCCESS_KEY, MESSAGE_KEY, DATA_KEY, DEFAULT_FAILURE
-from pyrogram.types             import User
+from .constants     import SUCCESS_KEY, MESSAGE_KEY, DATA_KEY, DEFAULT_FAILURE
+from telethon.tl.types import User
 
 class UserModels:
     @staticmethod
@@ -35,11 +35,10 @@ class UserModels:
             SUCCESS_KEY: True,
             DATA_KEY: {
                 "userId" : userDetails.id,
-                "username" : userDetails.username,
+                "username" : userDetails.username,  
                 "firstName" : userDetails.first_name,
                 "lastName" : userDetails.last_name,
-                "phoneNumber" : userDetails.phone_number,
-                "isBot" : userDetails.isBot
+                "phoneNumber" : userDetails.phone
             }
         }
 
