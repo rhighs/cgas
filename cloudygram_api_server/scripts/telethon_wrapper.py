@@ -3,6 +3,7 @@ from pathlib                        import Path
 from pyrogram                       import types
 from os                             import path
 from cloudygram_api_server.models   import TtModels
+from telethon.tl.types.auth         import SentCode
 
 class TtWrap:
     def __init__(self, api_id, api_hash):
@@ -25,34 +26,33 @@ class TtWrap:
         client.connect()
         client.disconnect()
 
-    def send_code(self, phone_number):
+    async def send_code(self, phone_number):
         if not self.is_authenticated(phone_number):
             raise Exception("Invalid phone number, not authenticated")
         client = self.create_client(phone_number) 
-        client.connect()
+        await client.connect()
         try:
-            code = client.send_code_request(phone_number)
+            code: SentCode = await client.send_code_request(phone_number)
         except Exception as e :
-            client.disconnect()
+            await client.disconnect()
             return TtModels.send_code_failure(str(e))
-        client.disconnect()
-            
+        await client.disconnect()
         return code.phone_code_hash
 
-    def signin(self, phone_number, phone_code_hash, phone_code):
+    async def signin(self, phone_number, phone_code_hash, phone_code):
         if not self.is_authenticated(phone_number):
             raise Exception("Invalid phone number, not authenticated")
         client = self.create_client(phone_number)
-        client.connect()
+        await client.connect()
         try:
-            result: types.SentCode = client.sign_in(phone=phone_number, phone_code_hash=phone_code_hash, code=phone_code)
+            result: types.SentCode = await client.sign_in(phone=phone_number, phone_code_hash=phone_code_hash, code=phone_code)
         except Exception as e:
-            client.disconnect()
+            await client.disconnect()
             return TtModels.sing_in_failure(str(e))
         if type(result) is types.TermsOfService:
-            client.disconnect()
+            await client.disconnect()
             return TtModels.sing_in_failure("Requires terms of service acceptance")
-        client.disconnect()
+        await client.disconnect()
         return result #of type User
 
     def get_me(self, phone_number):

@@ -30,12 +30,12 @@ class UserModels:
         return DEFAULT_FAILURE
 
     @staticmethod
-    def userDetails(userDetails: User):
+    def userDetails(userDetails):
         return {
             SUCCESS_KEY: True,
             DATA_KEY: {
                 "userId" : userDetails.id,
-                "username" : userDetails.username,  
+                "username" : userDetails.username,
                 "firstName" : userDetails.first_name,
                 "lastName" : userDetails.last_name,
                 "phoneNumber" : userDetails.phone
