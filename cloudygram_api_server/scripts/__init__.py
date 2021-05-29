@@ -1,2 +1,2 @@
-from .pyrogram_wrapper import PyroWrap
+from .telethon_wrapper import TtWrap
 from .logger import Logger

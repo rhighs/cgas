@@ -1,46 +1,40 @@
-from pyrogram                   import Client
-from pathlib                    import Path
-from pyrogram                   import types
-from os                         import path
-from pyrogram_api_server.models import PyroModels
+from telethon                       import TelegramClient
+from pathlib                        import Path
+from pyrogram                       import types
+from os                             import path
+from cloudygram_api_server.models   import TtModels
 
-class PyroWrap:
-    def __init__(self, api_id, api_hash, workdir):
-        self.workdir = workdir
+class TtWrap:
+    def __init__(self, api_id, api_hash):
         self.api_id = api_id
         self.api_hash = api_hash
-        self.client = None
-        self.cc = lambda phone_number: Client(test_mode=True,
-                                              api_id=self.api_id,
-                                              api_hash=self.api_hash,
-                                              phone_number=phone_number,
-                                              session_name=phone_number)
+
+    def create_client(self, phone_number):
+        return TelegramClient(api_id=self.api_id, api_hash=self.api_hash, session=phone_number)
 
     def send_private_message(self, phone_number, message):
         if not self.is_authenticated(phone_number):
             return
-        client = self.cc(phone_number) 
+        client = self.create_client(phone_number) 
         client.connect()
         client.send_message("me", message)
         client.disconnect()
 
     def create_session(self, phone_number):
-        client = self.cc(phone_number)
+        client = self.create_client(phone_number)
         client.connect()
         client.disconnect()
 
     def send_code(self, phone_number):
         if not self.is_authenticated(phone_number):
             raise Exception("Invalid phone number, not authenticated")
-        client = self.cc(phone_number) 
+        client = self.create_client(phone_number) 
         client.connect()
-        client.initialize()
         try:
-            code = client.send_code(phone_number)
+            code = client.send_code_request(phone_number)
         except Exception as e :
             client.disconnect()
-            return PyroModels.send_code_failure(str(e))
-        client.terminate()
+            return TtModels.send_code_failure(str(e))
         client.disconnect()
             
         return code.phone_code_hash
@@ -48,23 +42,23 @@ class PyroWrap:
     def signin(self, phone_number, phone_code_hash, phone_code):
         if not self.is_authenticated(phone_number):
             raise Exception("Invalid phone number, not authenticated")
-        client = self.cc(phone_number)
+        client = self.create_client(phone_number)
         client.connect()
         try:
-            result: types.SentCode = client.sign_in(phone_number, phone_code_hash, phone_code)
+            result: types.SentCode = client.sign_in(phone=phone_number, phone_code_hash=phone_code_hash, code=phone_code)
         except Exception as e:
             client.disconnect()
-            return PyroModels.sing_in_failure(str(e))
+            return TtModels.sing_in_failure(str(e))
         if type(result) is types.TermsOfService:
             client.disconnect()
-            return PyroModels.sing_in_failure("Requires terms of service acceptance")
+            return TtModels.sing_in_failure("Requires terms of service acceptance")
         client.disconnect()
         return result #of type User
 
     def get_me(self, phone_number):
         if not self.is_authenticated(phone_number):
             raise Exception("Invalid phone number, not authenticated")
-        client = self.cc(phone_number)
+        client = self.create_client(phone_number)
         client.connect()
         result = client.get_me()
         client.disconnect()
@@ -73,9 +67,9 @@ class PyroWrap:
     def upload_file(self, phone_number, file_path):
         if not self.is_authenticated(phone_number):
             raise Exception("Invalid phone number, not authenticated")
-        client = self.cc(phone_number)
+        client = self.create_client(phone_number)
         client.connect()
-        result = client.save_file(path=file_path)
+        result = client.upload_file(file=None)
         client.disconnect()
         return result
 
