@@ -6,11 +6,14 @@ from cloudygram_api_server.models       import HomeModels
 from cloudygram_api_server.scripts      import TtWrap
 from cloudygram_api_server.models       import SUCCESS_KEY
 import cloudygram_api_server
+import asyncio, concurrent.futures
+
 
 class HomeController(object):
     __autoexpose__ = None
 
     def __init__(self, request: Request):
+        self.pool = concurrent.futures.ThreadPoolExecutor()
         self.request = request
 
     @action(name="changeApiKeys", renderer="json", request_method="POST") 
@@ -35,7 +38,7 @@ class HomeController(object):
     def send_code(self):
         phone_number = self.request.POST["phoneNumber"][1:]
         wrap = cloudygram_api_server.getPyroWrapper()
-        result = wrap.send_code(phone_number) 
+        result = self.pool.submit(asyncio.run, wrap.send_code(phone_number)).result() 
         if type(result) is dict and SUCCESS_KEY in result:
             return result
         return HomeModels.sent_code(result)
@@ -46,7 +49,7 @@ class HomeController(object):
         phone_code_hash = self.request.POST["phoneCodeHash"]
         phone_code = self.request.POST["phoneCode"]
         wrap = cloudygram_api_server.getPyroWrapper()
-        result = wrap.signin(phone_number=phone_number, phone_code_hash=phone_code_hash, phone_code=phone_code)
+        result = self.pool.submit(asyncio.run, wrap.signin(phone_number=phone_number, phone_code_hash=phone_code_hash, phone_code=phone_code)).result()
         if(result[SUCCESS_KEY] == False):
             return result
         return UserModels.userDetails(result)
