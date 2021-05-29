@@ -1,7 +1,7 @@
 import sys
 import json
-from pyrogram_api_server import composeHelp
-from pyrogram_api_server import ApiServer
+from cloudygram_api_server import composeHelp
+from cloudygram_api_server import ApiServer
 from os import path
 
 PATH = "./keys.json"
