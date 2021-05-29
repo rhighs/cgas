@@ -1,4 +1,4 @@
 pyramid
 pyramid_handlers
-pyrogram
+telethon
 TgCrypto
