@@ -12,10 +12,6 @@ def startup():
         if(command == "--help"):
             print(composeHelp())
             exit(0)
-        elif(command == "--no-keys"):
-            app = ApiServer(port=5000, host_ip="0.0.0.0", mode="no-keys")
-            app.run()
-            exit(0)
 
     if path.exists(PATH):
         with open(PATH, "r") as f:

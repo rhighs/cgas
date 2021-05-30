@@ -28,7 +28,7 @@ class ApiServer:
         server = make_server(self.host_ip, self.port, app=pyramid_app)
         server.serve_forever()
 
-def getPyroWrapper():
+def get_tt():
     if(type(tt_wrap) is None):
-        raise Exception("pyro is nonetype")
+        raise Exception("Telethon was not instanciated")
     return tt_wrap

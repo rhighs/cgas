@@ -22,7 +22,7 @@ class HomeController(object):
         api_hash = self.request.POST["api_hash"]
         workdir = self.request.POST["workdir"]
         try:
-            cloudygram_api_server.pyro_wrap = TtWrap(api_id, api_hash, workdir)
+            cloudygram_api_server.pyro_wrap = TtWrap(api_id, api_hash)
         except Exception as e:
             return HomeModels.failure(message=f"Exception occurred --> {str(e)}")
         return HomeModels.success(message="Wrapper created!")
@@ -30,14 +30,14 @@ class HomeController(object):
     @action(name="addSession", renderer="json", request_method="POST")
     def add_account(self):
         phoneNumber = self.request.POST["phoneNumber"][1:]
-        wrap = cloudygram_api_server.getPyroWrapper()
+        wrap = cloudygram_api_server.get_tt()
         wrap.create_session(phoneNumber)
         return HomeModels.success(message=f"Session with: {phoneNumber} created.")
 
     @action(name="sendCode", renderer="json", request_method="POST")
     def send_code(self):
         phone_number = self.request.POST["phoneNumber"][1:]
-        wrap = cloudygram_api_server.getPyroWrapper()
+        wrap = cloudygram_api_server.get_tt()
         result = self.pool.submit(asyncio.run, wrap.send_code(phone_number)).result() 
         if type(result) is dict and SUCCESS_KEY in result:
             return result
@@ -48,7 +48,7 @@ class HomeController(object):
         phone_number = self.request.POST["phoneNumber"][1:]
         phone_code_hash = self.request.POST["phoneCodeHash"]
         phone_code = self.request.POST["phoneCode"]
-        wrap = cloudygram_api_server.getPyroWrapper()
+        wrap = cloudygram_api_server.get_tt()
         result = self.pool.submit(asyncio.run, wrap.signin(phone_number=phone_number, phone_code_hash=phone_code_hash, phone_code=phone_code)).result()
         if(result[SUCCESS_KEY] == False):
             return result
