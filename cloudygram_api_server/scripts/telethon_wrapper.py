@@ -55,13 +55,13 @@ class TtWrap:
         await client.disconnect()
         return result #of type User
 
-    def get_me(self, phone_number):
-        if not self.is_authenticated(phone_number):
-            raise Exception("Invalid phone number, not authenticated")
+    async def get_me(self, phone_number):
         client = self.create_client(phone_number)
-        client.connect()
-        result = client.get_me()
-        client.disconnect()
+        if not client.is_user_authorized:
+            raise Exception("Invalid phone number, not authenticated")
+        await client.connect()
+        result = await client.get_me()
+        await client.disconnect()
         return result
 
     def upload_file(self, phone_number, file_path):
