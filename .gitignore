@@ -2,6 +2,7 @@ keys.json
 sessions/
 sessions
 *.session
+.vscode/
 
 __pycache__/
 *.py[cod]
