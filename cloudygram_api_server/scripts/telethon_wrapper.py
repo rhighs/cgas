@@ -14,9 +14,9 @@ class TtWrap:
         return TelegramClient(api_id=self.api_id, api_hash=self.api_hash, session=phone_number)
 
     def send_private_message(self, phone_number, message):
-        if not self.is_authenticated(phone_number):
-            return
         client = self.create_client(phone_number) 
+        if not client.is_user_authorized():
+            return
         client.connect()
         client.send_message("me", message)
         client.disconnect()
@@ -27,9 +27,9 @@ class TtWrap:
         client.disconnect()
 
     async def send_code(self, phone_number):
-        if not self.is_authenticated(phone_number):
+        client = self.create_client(phone_number)
+        if not client.is_user_authorized():
             raise Exception("Invalid phone number, not authenticated")
-        client = self.create_client(phone_number) 
         await client.connect()
         try:
             code: SentCode = await client.send_code_request(phone_number)
@@ -40,9 +40,9 @@ class TtWrap:
         return code.phone_code_hash
 
     async def signin(self, phone_number, phone_code_hash, phone_code):
-        if not self.is_authenticated(phone_number):
-            raise Exception("Invalid phone number, not authenticated")
         client = self.create_client(phone_number)
+        if not client.is_user_authorized():
+            raise Exception("Invalid phone number, not authenticated")
         await client.connect()
         try:
             result: types.SentCode = await client.sign_in(phone=phone_number, phone_code_hash=phone_code_hash, code=phone_code)
@@ -57,7 +57,7 @@ class TtWrap:
 
     async def get_me(self, phone_number):
         client = self.create_client(phone_number)
-        if not client.is_user_authorized:
+        if not client.is_user_authorized():
             raise Exception("Invalid phone number, not authenticated")
         await client.connect()
         result = await client.get_me()
@@ -65,15 +65,10 @@ class TtWrap:
         return result
 
     def upload_file(self, phone_number, file_path):
-        if not self.is_authenticated(phone_number):
-            raise Exception("Invalid phone number, not authenticated")
         client = self.create_client(phone_number)
+        if not client.is_user_authorized():
+            raise Exception("Invalid phone number, not authenticated")
         client.connect()
         result = client.upload_file(file=None)
         client.disconnect()
         return result
-
-    def is_authenticated(self, phone_number):
-        return True
-        session_file = Path(f"{self.workdir}/{phone_number}.session")
-        return session_file.exists()
