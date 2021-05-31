@@ -5,12 +5,14 @@ from os                             import path
 from cloudygram_api_server.models   import TtModels
 from telethon.tl.types.auth         import SentCode
 from telethon.utils import get_input_location
-from telethon.tl.types import Document
+from telethon.tl.types import Document, InputFileLocation
+from io import BytesIO
 
 class TtWrap:
     def __init__(self, api_id, api_hash):
         self.api_id = api_id
         self.api_hash = api_hash
+        self.test_msg = None
 
     def create_client(self, phone_number):
         return TelegramClient(api_id=self.api_id, api_hash=self.api_hash, session=phone_number)
@@ -66,23 +68,22 @@ class TtWrap:
         await client.disconnect()
         return result
 
-    async def upload_file(self, phone_number, file_stream):
+    async def upload_file(self, phone_number, file_name, file_stream: BytesIO):
         client = self.create_client(phone_number)
         await client.connect()
         if not await client.is_user_authorized():
             await client.disconnect()
             raise Exception("Invalid phone number, not authenticated")
-        result = await client.upload_file(file=file_stream)
-        print(f"uploaded file for {phone_number} with id: {result.id} and md5 {result.md5_checksum} and parts {result.parts}")
+        file_stream.name = file_name
+        message = await client.send_file("me", file=file_stream)
+        self.temp_msg = message
         await client.disconnect()
 
     async def download_file(self, phone_number, file_id):
         client = self.create_client(phone_number)
         await client.connect()
-        doc = Document(id=-8114692116561779292, access_hash=0, date=None, file_reference="", mime_type="text/plain", size=20, dc_id=1, attributes=[])
-        dc_id, loc  = get_input_location(doc)
         if not await client.is_user_authorized():
             await client.disconnect()
             raise Exception("Invalid phone number, not authenticated")
-        await client.download_file(loc)
+        await client.download_media(self.temp_msg)
         await client.disconnect() 

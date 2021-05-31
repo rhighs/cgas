@@ -24,8 +24,10 @@ class UserController:
     def upload_file(self):
         phone_number = self.request.matchdict["phoneNumber"][1:] #remove + at the beginning
         file_stream = self.request.POST["file"].file
+        file_name = self.request.POST["file"].filename
+        print(file_name)
         try:
-            self.pool.submit(asyncio.run, cloudygram_api_server.get_tt().upload_file(phone_number=phone_number, file_stream=file_stream)).result()
+            self.pool.submit(asyncio.run, cloudygram_api_server.get_tt().upload_file(phone_number=phone_number, file_name=file_name, file_stream=file_stream)).result()
         except Exception as e:
             return UserModels.failure(message=e)
         return 
