@@ -18,7 +18,7 @@ namespace test_file
             var fileName = Console.ReadLine();
             Console.Write("insert file content(txt): ");
             var fileContent = Console.ReadLine();
-            CreateFile(fileContent);
+            CreateFile(fileName, fileContent);
             Console.WriteLine(SendFile(fileName));
         }
 
@@ -30,16 +30,18 @@ namespace test_file
             f.Close();
         }
 
-        static bool SendFile(string fileName)
+        static string SendFile(string fileName)
         {
-            Stream r = new FileStream(PATH, FileMode.Open);
+            Stream r = new FileStream(BASE_PATH + fileName, FileMode.Open);
             HttpContent content = new StreamContent(r);
+            HttpContent mimeType = new StringContent("text/plain");
             using (var client = new HttpClient())
             using (var formData = new MultipartFormDataContent())
             {
                 formData.Add(content, API_FILE_KEY, fileName);
+                formData.Add(mimeType, "mimeType");
                 var resp = client.PostAsync(URL, formData).Result;
-                return resp.IsSuccessStatusCode;
+                return resp.IsSuccessStatusCode ? resp.Content.ReadAsStringAsync().Result : "Error: upload unsuccessful";
             }
         }
     }
