@@ -8,8 +8,9 @@ namespace test_file
 {
     class Program
     {
-        static public string PATH = "./prova.txt";
-        static public string url = "http://127.0.0.1:5000/user/+393421323295/uploadFile";
+        static public string BASE_PATH = "./";
+        static public string URL = "http://127.0.0.1:5000/user/+393421323295/uploadFile";
+        static public string API_FILE_KEY = "file";
 
         static void Main(string[] args)
         {
@@ -21,10 +22,10 @@ namespace test_file
             Console.WriteLine(SendFile(fileName));
         }
 
-        static void CreateFile(string fileContent)
+        static void CreateFile(string fileName, string fileContent)
         {
             byte[] toWrite = Encoding.ASCII.GetBytes(fileContent);
-            var f = new FileStream(PATH, FileMode.OpenOrCreate);
+            var f = new FileStream(BASE_PATH + fileName, FileMode.OpenOrCreate);
             f.Write(toWrite, 0, toWrite.Length);
             f.Close();
         }
@@ -36,8 +37,8 @@ namespace test_file
             using (var client = new HttpClient())
             using (var formData = new MultipartFormDataContent())
             {
-                formData.Add(content, "file", fileName);
-                var resp = client.PostAsync(url, formData).Result;
+                formData.Add(content, API_FILE_KEY, fileName);
+                var resp = client.PostAsync(URL, formData).Result;
                 return resp.IsSuccessStatusCode;
             }
         }
