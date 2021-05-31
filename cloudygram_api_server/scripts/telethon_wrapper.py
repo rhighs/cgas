@@ -5,7 +5,8 @@ from os                             import path
 from cloudygram_api_server.models   import TtModels
 from telethon.tl.types.auth         import SentCode
 from telethon.utils import get_input_location
-from telethon.tl.types import Document, InputFileLocation
+from telethon.tl import functions, types
+from telethon.tl.types import Document, InputFileLocation, MessageMediaDocument
 from io import BytesIO
 
 class TtWrap:
@@ -49,13 +50,15 @@ class TtWrap:
         if not client.is_user_authorized():
             raise Exception("Invalid phone number, not authenticated")
         try:
-            result: types.SentCode = await client.sign_in(phone=phone_number, phone_code_hash=phone_code_hash, code=phone_code)
+            result: SentCode = await client.sign_in(phone=phone_number, phone_code_hash=phone_code_hash, code=phone_code)
         except Exception as e:
             await client.disconnect()
             return TtModels.sing_in_failure(str(e))
-        if type(result) is types.TermsOfService:
+            """
+            if false
             await client.disconnect()
             return TtModels.sing_in_failure("Requires terms of service acceptance")
+            """
         await client.disconnect()
         return result #of type User
 
@@ -68,22 +71,37 @@ class TtWrap:
         await client.disconnect()
         return result
 
-    async def upload_file(self, phone_number, file_name, file_stream: BytesIO):
+    async def upload_file(self, phone_number, file_name, file_stream: BytesIO, mime_type):
         client = self.create_client(phone_number)
         await client.connect()
         if not await client.is_user_authorized():
             await client.disconnect()
             raise Exception("Invalid phone number, not authenticated")
         file_stream.name = file_name
-        message = await client.send_file("me", file=file_stream)
-        self.temp_msg = message
+        uploaded_file = await client.upload_file(file=file_stream)
+        result: MessageMediaDocument = await client(functions.messages.UploadMediaRequest(
+            peer = (await client.get_me()).username,
+            media = types.InputMediaUploadedDocument(
+                file=uploaded_file,
+                stickers=[types.InputDocument(
+                    id=uploaded_file.id,
+                    access_hash=uploaded_file.id,
+                    file_reference=b'some\x7f data \xfa here'
+                )],
+                ttl_seconds=100,
+                mime_type=mime_type,
+                attributes=[]
+            )
+        ))
+        self.temp_msg = result #this is temp
         await client.disconnect()
+        return result.to_json()
 
-    async def download_file(self, phone_number, file_id):
+    async def download_file(self, phone_number, file_id, ):
         client = self.create_client(phone_number)
         await client.connect()
         if not await client.is_user_authorized():
             await client.disconnect()
             raise Exception("Invalid phone number, not authenticated")
-        await client.download_media(self.temp_msg)
+        await client.download_media(self.temp_msg) #temp
         await client.disconnect() 
