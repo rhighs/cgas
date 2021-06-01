@@ -30,15 +30,15 @@ class UserController:
         try:
             result = self.pool.submit(asyncio.run, cloudygram_api_server.get_tt().upload_file(phone_number=phone_number, file_name=file_name, file_stream=file_stream, mime_type=mime_type)).result()
         except Exception as e:
-            return UserModels.failure(message=e)
+            return UserModels.failure(message=str(e))
         return UserModels.success(data=result)
     
     @action(name="downloadFile", renderer="json", request_method="POST")
     def download_file(self):
         phone_number = self.request.matchdict["phoneNumber"][1:]
+        message_json = self.request.POST["message"]
         try:
-            self.pool.submit(asyncio.run, cloudygram_api_server.get_tt().download_file(phone_number=phone_number, file_id=123)).result()
+            self.pool.submit(asyncio.run, cloudygram_api_server.get_tt().download_file(phone_number=phone_number, message_json=message_json)).result()
         except Exception as e:
-            return UserModels.failure(message=e)
+            return UserModels.failure(message=str(e))
         return 
-        
