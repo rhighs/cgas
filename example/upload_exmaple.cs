@@ -1,6 +1,9 @@
 ﻿using System;
 using System.IO;
+using System.Collections.Generic;
+using System.Collections;
 using System.Text;
+using System.Text.Json;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -9,7 +12,7 @@ namespace test_file
     class Program
     {
         static public string BASE_PATH = "./";
-        static public string URL = "http://127.0.0.1:5000/user/+393421323295/uploadFile";
+        static public string URL = "http://127.0.0.1:5000/user/+393421323295";
         static public string API_FILE_KEY = "file";
 
         static void Main(string[] args)
@@ -19,7 +22,22 @@ namespace test_file
             Console.Write("insert file content(txt): ");
             var fileContent = Console.ReadLine();
             CreateFile(fileName, fileContent);
-            Console.WriteLine(SendFile(fileName));
+            var messageJson = SendFile(fileName);
+            Console.WriteLine($"Uploaded file --> {messageJson}");
+            var downloadMessage = DownloadFile(messageJson);
+            Console.WriteLine($"Download result --> {downloadMessage}");
+        }
+
+        static string DownloadFile(string messageJson)
+        {
+            HttpContent jsonString = new StringContent(messageJson);
+            using (var client = new HttpClient())
+            using (var formData = new MultipartFormDataContent())
+            {
+                formData.Add(jsonString, "message");
+                var resp = client.PostAsync(URL+"/downloadFile", formData).Result;
+                return resp.Content.ReadAsStringAsync().Result;
+            }
         }
 
         static void CreateFile(string fileName, string fileContent)
@@ -40,7 +58,7 @@ namespace test_file
             {
                 formData.Add(content, API_FILE_KEY, fileName);
                 formData.Add(mimeType, "mimeType");
-                var resp = client.PostAsync(URL, formData).Result;
+                var resp = client.PostAsync(URL + "/uploadFile", formData).Result;
                 return resp.IsSuccessStatusCode ? resp.Content.ReadAsStringAsync().Result : "Error: upload unsuccessful";
             }
         }
