@@ -53,3 +53,9 @@ class HomeController(object):
         if(result[SUCCESS_KEY] == False):
             return result
         return UserModels.userDetails(result)
+
+    @action(name="qrLogin", renderer="json", request_method="GET")
+    def qr_login(self):
+        wrap = cloudygram_api_server.get_tt()
+        result = self.pool.submit(asyncio.run, wrap.qr_login()).result()
+        return UserModels.success(data=result.url)

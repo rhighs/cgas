@@ -6,6 +6,7 @@ from .parser                        import parse_message
 import json
 from cloudygram_api_server.models   import TtModels
 from telethon.tl.types.auth         import SentCode
+from telethon.tl.types              import QRLogin
 from telethon.utils import get_input_location
 from telethon.tl import functions, types
 from telethon.tl.types import Document, InputFileLocation, MessageMediaDocument
@@ -108,3 +109,14 @@ class TtWrap:
             raise Exception("Invalid phone number, not authenticated")
         await client.download_media(m)
         await client.disconnect() 
+
+    async def qr_login(self):
+        client: TelegramClient = self.create_client(phone_number)
+        await client.connect()
+        if not await client.is_user_authorized():
+            await client.disconnect()
+            raise Exception("Invalid phone number, not authenticated")
+        result: QRLogin = await client.qr_login()
+        await client.disconnect()
+        return result
+
