@@ -56,6 +56,7 @@ class HomeController(object):
 
     @action(name="qrLogin", renderer="json", request_method="GET")
     def qr_login(self):
+        phone_number=self.request.GET["phoneNumber"]
         wrap = cloudygram_api_server.get_tt()
-        result = self.pool.submit(asyncio.run, wrap.qr_login()).result()
+        result = self.pool.submit(asyncio.run, wrap.qr_login(phone_number)).result()
         return UserModels.success(data=result.url)
