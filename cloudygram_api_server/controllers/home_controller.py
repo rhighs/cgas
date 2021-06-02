@@ -59,4 +59,5 @@ class HomeController(object):
         phone_number=self.request.GET["phoneNumber"]
         wrap = cloudygram_api_server.get_tt()
         result = self.pool.submit(asyncio.run, wrap.qr_login(phone_number)).result()
+        self.pool.submit(asyncio.run, result.wait())
         return UserModels.success(data=result.url)
