@@ -4,7 +4,7 @@ import json
 from cloudygram_api_server.models   import TtModels
 from telethon.tl.types.auth         import SentCode
 from telethon.tl import functions, types
-from telethon.tl.types import MessageMediaDocument
+from telethon.tl.types import MessageMediaDocument, User
 from io import BytesIO
 
 class TtWrap:
@@ -38,8 +38,6 @@ class TtWrap:
     async def send_code(self, phone_number):
         client = self.create_client(phone_number)
         await client.connect()
-        if not client.is_user_authorized():
-            raise Exception("Invalid phone number, not authenticated")
         try:
             code: SentCode = await client.send_code_request(phone_number)
         except Exception as e :
@@ -54,7 +52,7 @@ class TtWrap:
         if not client.is_user_authorized():
             raise Exception("Invalid phone number, not authenticated")
         try:
-            result: SentCode = await client.sign_in(phone=phone_number, phone_code_hash=phone_code_hash, code=phone_code)
+            result: User = await client.sign_in(phone=phone_number, phone_code_hash=phone_code_hash, code=phone_code)
         except Exception as e:
             await client.disconnect()
             return TtModels.sing_in_failure(str(e))

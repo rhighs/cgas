@@ -47,7 +47,7 @@ class HomeController(object):
                         phone_code_hash=phone_code_hash,
                         phone_code=phone_code)
         ).result()
-        if(result[SUCCESS_KEY] == False):
+        if type(result) is dict and SUCCESS_KEY in result:
             return result
         return UserModels.userDetails(result)
 
