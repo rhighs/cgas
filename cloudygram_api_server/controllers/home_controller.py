@@ -23,9 +23,9 @@ class HomeController(object):
         wrap.create_session(phoneNumber)
         return HomeModels.success(message=f"Session with: {phoneNumber} created.")
 
-    @action(name="sendCode", renderer="json", request_method="POST")
+    @action(name="sendCode", renderer="json", request_method="GET")
     def send_code(self):
-        phone_number = self.request.POST["phoneNumber"][1:]
+        phone_number = self.request.GET["phoneNumber"][1:]
         wrap = cloudygram_api_server.get_tt()
         result = self.pool.submit(
             asyncio.run,
