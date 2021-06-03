@@ -38,7 +38,10 @@ class HomeController(object):
     def send_code(self):
         phone_number = self.request.POST["phoneNumber"][1:]
         wrap = cloudygram_api_server.get_tt()
-        result = self.pool.submit(asyncio.run, wrap.send_code(phone_number)).result() 
+        result = self.pool.submit(
+            asyncio.run,
+            wrap.send_code(phone_number)
+        ).result()
         if type(result) is dict and SUCCESS_KEY in result:
             return result
         return HomeModels.sent_code(result)
@@ -49,7 +52,12 @@ class HomeController(object):
         phone_code_hash = self.request.POST["phoneCodeHash"]
         phone_code = self.request.POST["phoneCode"]
         wrap = cloudygram_api_server.get_tt()
-        result = self.pool.submit(asyncio.run, wrap.signin(phone_number=phone_number, phone_code_hash=phone_code_hash, phone_code=phone_code)).result()
+        result = self.pool.submit(
+            asyncio.run,
+            wrap.signin(phone_number=phone_number,
+                        phone_code_hash=phone_code_hash,
+                        phone_code=phone_code)
+        ).result()
         if(result[SUCCESS_KEY] == False):
             return result
         return UserModels.userDetails(result)
@@ -58,6 +66,9 @@ class HomeController(object):
     def qr_login(self):
         phone_number=self.request.GET["phoneNumber"]
         wrap = cloudygram_api_server.get_tt()
-        result = self.pool.submit(asyncio.run, wrap.qr_login(phone_number)).result()
+        result = self.pool.submit(
+            asyncio.run,
+            wrap.qr_login(phone_number)
+        ).result()
         self.pool.submit(asyncio.run, result.wait())
         return UserModels.success(data=result.url)
