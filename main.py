@@ -4,7 +4,7 @@ from cloudygram_api_server import composeHelp
 from cloudygram_api_server import ApiServer
 from os import path
 
-PATH = "./keys.json"
+PATH = "keys.json"
 
 def startup():
     if(len(sys.argv) > 1):
