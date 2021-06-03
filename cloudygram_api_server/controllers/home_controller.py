@@ -15,17 +15,6 @@ class HomeController(object):
     def __init__(self, request: Request):
         self.pool = concurrent.futures.ThreadPoolExecutor()
         self.request = request
-
-    @action(name="changeApiKeys", renderer="json", request_method="POST") 
-    def authorize(self):
-        api_id = self.request.POST["api_id"]
-        api_hash = self.request.POST["api_hash"]
-        workdir = self.request.POST["workdir"]
-        try:
-            cloudygram_api_server.pyro_wrap = TtWrap(api_id, api_hash)
-        except Exception as e:
-            return HomeModels.failure(message=f"Exception occurred --> {str(e)}")
-        return HomeModels.success(message="Wrapper created!")
         
     @action(name="addSession", renderer="json", request_method="POST")
     def add_account(self):
