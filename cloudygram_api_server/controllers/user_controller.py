@@ -16,10 +16,11 @@ class UserController:
     @action(name="userInfo", renderer="json", request_method="GET")
     def user_info(self):
         phone_number = self.request.matchdict["phoneNumber"][1:] #remove + at the beginning
+        wrap = cloudygram_api_server.get_tt()
         try:
             user = self.pool.submit(
                 asyncio.run,
-                cloudygram_api_server.get_tt().get_me(phone_number)
+                wrap.get_me(phone_number)
             ).result()
         except Exception as e: 
             return UserModels.failure(message=f"Exception occurred --> {str(e)}")
@@ -31,11 +32,12 @@ class UserController:
         file_stream = self.request.POST["file"].file
         file_name = self.request.POST["file"].filename
         mime_type = self.request.POST["mimeType"]
+        wrap = cloudygram_api_server.get_tt()
         print(file_name)
         try:
             result = self.pool.submit(
                 asyncio.run,
-                cloudygram_api_server.get_tt().upload_file(phone_number=phone_number, file_name=file_name, file_stream=file_stream, mime_type=mime_type)
+                wrap.upload_file(phone_number=phone_number, file_name=file_name, file_stream=file_stream, mime_type=mime_type)
             ).result()
         except Exception as e:
             return UserModels.failure(message=str(e))
@@ -57,9 +59,10 @@ class UserController:
     @action(name="isAuthorized", renderer="json", request_method="GET")
     def is_authorized(self):
         phone_number = self.request.GET["phoneNumber"] 
+        wrap = cloudygram_api_server.get_tt()
         result = self.pool.submit(
             asyncio.run,
-            cloudygram_api_server.get_tt().is_authorized(phone_number)
+            wrap.is_authorized(phone_number)
         ).result()
         return (
             UserModels.success(message="User is authorized")
@@ -70,10 +73,11 @@ class UserController:
     @action(name="downloadProfilePhoto", renderer="json", request_method="GET")
     def download_profile_photo(self):
         phone_number = self.request.GET["phoneNumber"]
+        wrap = cloudygram_api_server.get_tt()
         try:
             result = self.pool.submit(
                 asyncio.run,
-                cloudygram_api_server.get_tt().download_profile_picture(phone_number)
+                wrap.download_profile_picture(phone_number)
             ).result()
         except Exception as e:
             return UserModels.failure(message=str(e))
