@@ -1,13 +1,10 @@
 from telethon                       import TelegramClient
-from pathlib                        import Path
-from os                             import path
 from .parser                        import parse_message
 import json
 from cloudygram_api_server.models   import TtModels
 from telethon.tl.types.auth         import SentCode
-from telethon.utils import get_input_location
 from telethon.tl import functions, types
-from telethon.tl.types import Document, InputFileLocation, MessageMediaDocument
+from telethon.tl.types import MessageMediaDocument
 from io import BytesIO
 
 class TtWrap:
@@ -18,6 +15,12 @@ class TtWrap:
 
     def create_client(self, phone_number):
         return TelegramClient(api_id=self.api_id, api_hash=self.api_hash, session=phone_number)
+    
+    async def is_authorized(self, phone_number):
+        client = self.create_client(phone_number)
+        await client.connect()
+        result = await client.is_user_authorized()
+        return result
 
     def send_private_message(self, phone_number, message):
         client = self.create_client(phone_number) 
@@ -108,10 +111,19 @@ class TtWrap:
         await client.download_media(m)
         await client.disconnect() 
 
+    async def download_profile_photo(self, phone_number):
+        client = self.create_client(phone_number)
+        await client.connect()
+        if not await client.is_user_authorized():
+            await client.disconnect()
+            raise Exception("Invalid phone number, not authenticated")
+        path = await client.download_profile_photo("me")
+        await client.disconnect()
+        return path
+
     async def qr_login(self, phone_number):
         client: TelegramClient = self.create_client(phone_number)
         await client.connect()
         result = await client.qr_login()
         await client.disconnect()
         return result
-
