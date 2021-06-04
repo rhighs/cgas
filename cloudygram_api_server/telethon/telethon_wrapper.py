@@ -54,9 +54,6 @@ class TtWrap:
     async def signin(self, phone_number, phone_code_hash, phone_code):
         client = self.create_client(phone_number)
         await client.connect()
-        if not await client.is_user_authorized():
-            client.disconnect()
-            raise exc.HTTPUnauthorized()
         try:
             result: User = await client.sign_in(phone=phone_number, phone_code_hash=phone_code_hash, code=phone_code)
         except Exception as e:
