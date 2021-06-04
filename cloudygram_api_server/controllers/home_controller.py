@@ -1,9 +1,7 @@
 from cloudygram_api_server.models       import UserModels
 from pyramid_handlers                   import action
-from pyramid.response                   import Response
 from pyramid.request                    import Request
 from cloudygram_api_server.models       import HomeModels
-from cloudygram_api_server.scripts      import TtWrap
 from cloudygram_api_server.models       import SUCCESS_KEY
 import cloudygram_api_server
 import asyncio, concurrent.futures
@@ -16,9 +14,9 @@ class HomeController(object):
         self.pool = concurrent.futures.ThreadPoolExecutor()
         self.request = request
         
-    @action(name="addSession", renderer="json", request_method="POST")
+    @action(name="addSession", renderer="json", request_method="GET")
     def add_account(self):
-        phoneNumber = self.request.POST["phoneNumber"][1:]
+        phoneNumber = self.request.GET["phoneNumber"][1:]
         wrap = cloudygram_api_server.get_tt()
         wrap.create_session(phoneNumber)
         return HomeModels.success(message=f"Session with: {phoneNumber} created.")
@@ -37,9 +35,10 @@ class HomeController(object):
 
     @action(name="signin", renderer="json", request_method="POST")
     def signin(self):
-        phone_number = self.request.POST["phoneNumber"][1:]
-        phone_code_hash = self.request.POST["phoneCodeHash"]
-        phone_code = self.request.POST["phoneCode"]
+        body = self.request.json_body
+        phone_number = body["phoneNumber"][1:]
+        phone_code_hash = body["phoneCodeHash"]
+        phone_code = body["phoneCode"]
         wrap = cloudygram_api_server.get_tt()
         result = self.pool.submit(
             asyncio.run,
