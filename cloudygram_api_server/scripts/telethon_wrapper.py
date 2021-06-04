@@ -120,8 +120,18 @@ class TtWrap:
         return path
 
     async def qr_login(self, phone_number):
-        client: TelegramClient = self.create_client(phone_number)
+        client = self.create_client(phone_number)
         await client.connect()
         result = await client.qr_login()
+        await client.disconnect()
+        return result
+
+    async def logout(self, phone_number):
+        client = self.create_client(phone_number)
+        if not await client.is_user_authorized():
+            await client.disconnect()
+            raise Exception("Invalid phone number, not authenticated")
+        await client.connect()
+        result = await client.log_out()
         await client.disconnect()
         return result
