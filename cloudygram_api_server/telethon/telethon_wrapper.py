@@ -1,11 +1,11 @@
 from telethon                       import TelegramClient
+from io                             import BytesIO
 from .parser                        import parse_message
-import json
 from cloudygram_api_server.models   import TtModels
 from telethon.tl.types.auth         import SentCode
-from telethon.tl import functions, types
-from telethon.tl.types import MessageMediaDocument, User
-from io import BytesIO
+from telethon.tl                    import functions, types
+from telethon.tl.types              import MessageMediaDocument, User
+import pyramid.httpexceptions       as exc
 
 class TtWrap:
     def __init__(self, api_id, api_hash):
@@ -22,11 +22,12 @@ class TtWrap:
         result = await client.is_user_authorized()
         return result
 
-    def send_private_message(self, phone_number, message):
+    async def send_private_message(self, phone_number, message):
         client = self.create_client(phone_number) 
         client.connect()
-        if not client.is_user_authorized():
-            return
+        if not await client.is_user_authorized():
+            client.disconnect()
+            raise exc.HTTPUnauthorized()
         client.send_message("me", message)
         client.disconnect()
 
@@ -49,8 +50,9 @@ class TtWrap:
     async def signin(self, phone_number, phone_code_hash, phone_code):
         client = self.create_client(phone_number)
         await client.connect()
-        if not client.is_user_authorized():
-            raise Exception("Invalid phone number, not authenticated")
+        if not await client.is_user_authorized():
+            client.disconnect()
+            raise exc.HTTPUnauthorized()
         try:
             result: User = await client.sign_in(phone=phone_number, phone_code_hash=phone_code_hash, code=phone_code)
         except Exception as e:
@@ -67,8 +69,9 @@ class TtWrap:
     async def get_me(self, phone_number):
         client = self.create_client(phone_number)
         await client.connect()
-        if not client.is_user_authorized():
-            raise Exception("Invalid phone number, not authenticated")
+        if not await client.is_user_authorized():
+            client.disconnect()
+            raise exc.HTTPUnauthorized()
         result = await client.get_me()
         await client.disconnect()
         return result
@@ -77,8 +80,8 @@ class TtWrap:
         client = self.create_client(phone_number)
         await client.connect()
         if not await client.is_user_authorized():
-            await client.disconnect()
-            raise Exception("Invalid phone number, not authenticated")
+            client.disconnect()
+            raise exc.HTTPUnauthorized()
         file_stream.name = file_name
         uploaded_file = await client.upload_file(file=file_stream)
         result: MessageMediaDocument = await client(functions.messages.UploadMediaRequest(
@@ -104,8 +107,8 @@ class TtWrap:
         m = parse_message(message_json)
         await client.connect()
         if not await client.is_user_authorized():
-            await client.disconnect()
-            raise Exception("Invalid phone number, not authenticated")
+            client.disconnect()
+            raise exc.HTTPUnauthorized()
         await client.download_media(m)
         await client.disconnect() 
 
@@ -113,22 +116,25 @@ class TtWrap:
         client = self.create_client(phone_number)
         await client.connect()
         if not await client.is_user_authorized():
-            await client.disconnect()
-            raise Exception("Invalid phone number, not authenticated")
+            client.disconnect()
+            raise exc.HTTPUnauthorized()
         path = await client.download_profile_photo("me")
         await client.disconnect()
         return path
 
     async def qr_login(self, phone_number):
-        client: TelegramClient = self.create_client(phone_number)
+        client = self.create_client(phone_number)
         await client.connect()
         result = await client.qr_login()
         await client.disconnect()
         return result
 
-    async def deleteSession(self, phone_number):
-        client: TelegramClient = self.create_client(phone_number)
+    async def logout(self, phone_number):
+        client = self.create_client(phone_number)
+        if not await client.is_user_authorized():
+            await client.disconnect()
+            raise exc.HTTPUnauthorized()
         await client.connect()
-        result = client.log_out()
+        result = await client.log_out()
         await client.disconnect()
         return result

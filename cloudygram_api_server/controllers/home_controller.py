@@ -15,14 +15,7 @@ class HomeController(object):
     def __init__(self, request: Request):
         self.pool = concurrent.futures.ThreadPoolExecutor()
         self.request = request
-    
-    @action(name="deleteSession", renderer="json", request_method="DELETE")
-    def delete_account(self):
-        phoneNumber = self.request.GET["phoneNumber"][1:]
-        wrap = cloudygram_api_server.get_tt()
-        wrap.deleteSession(phoneNumber)
-        return HomeModels.success(message=f"Session with: {phoneNumber} deleted.")
-
+        
     @action(name="addSession", renderer="json", request_method="GET")
     def add_account(self):
         phoneNumber = self.request.GET["phoneNumber"][1:]

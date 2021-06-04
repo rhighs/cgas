@@ -42,3 +42,10 @@ class UserModels:
             }
         }
 
+    @staticmethod
+    def unauthorized():
+        return {
+            SUCCESS_KEY: False,
+            MESSAGE_KEY: "Invalid phone number or session expired!"
+        }
+
