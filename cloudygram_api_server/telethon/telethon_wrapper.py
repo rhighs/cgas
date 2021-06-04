@@ -6,6 +6,9 @@ from telethon.tl.types.auth         import SentCode
 from telethon.tl                    import functions, types
 from telethon.tl.types              import MessageMediaDocument, User
 import pyramid.httpexceptions       as exc
+import os
+from pathlib import Path
+from os import path
 
 class TtWrap:
     def __init__(self, api_id, api_hash):
@@ -14,7 +17,8 @@ class TtWrap:
         self.test_msg = None
 
     def create_client(self, phone_number):
-        return TelegramClient(api_id=self.api_id, api_hash=self.api_hash, session=phone_number)
+        workdir = os.path.join(os.getcwd(),"sessions",phone_number)
+        return TelegramClient(api_id=self.api_id, api_hash=self.api_hash, session=workdir)
     
     async def is_authorized(self, phone_number):
         client = self.create_client(phone_number)
