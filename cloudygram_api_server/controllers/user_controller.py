@@ -1,10 +1,10 @@
-from telethon.client.users import UserMethods
-from cloudygram_api_server.models import UserModels
-from pyramid_handlers           import action
-from pyramid.request import Request
-import cloudygram_api_server
+from pyramid_handlers               import action
+from pyramid.request                import Request
+from cloudygram_api_server.models   import UserModels
+from telethon.tl.types              import MessageMediaDocument
+from telethon.client.users          import UserMethods
 import asyncio, concurrent.futures
-from telethon.tl.types import MessageMediaDocument
+import cloudygram_api_server
 
 class UserController:
     __autoexpose__ = None
@@ -46,7 +46,7 @@ class UserController:
     @action(name="downloadFile", renderer="json", request_method="POST")
     def download_file(self):
         phone_number = self.request.matchdict["phoneNumber"][1:]
-        message_json = self.request.POST["message"]
+        message_json = self.json_body["message"]
         try:
             result: MessageMediaDocument = self.pool.submit(
                 asyncio.run,
