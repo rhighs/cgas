@@ -2,7 +2,7 @@ from cloudygram_api_server.controllers      import HomeController
 from cloudygram_api_server.controllers      import UserController
 from wsgiref.simple_server                  import make_server
 from pyramid.config                         import Configurator
-from cloudygram_api_server.scripts          import TtWrap
+from cloudygram_api_server.telethon         import TtWrap
 
 tt_wrap = None
 

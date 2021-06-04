@@ -1,12 +1,11 @@
 from telethon                       import TelegramClient
+from io                             import BytesIO
 from .parser                        import parse_message
-import json
-import pyramid.httpexceptions       as exc
 from cloudygram_api_server.models   import TtModels
 from telethon.tl.types.auth         import SentCode
-from telethon.tl import functions, types
-from telethon.tl.types import MessageMediaDocument, User
-from io import BytesIO
+from telethon.tl                    import functions, types
+from telethon.tl.types              import MessageMediaDocument, User
+import pyramid.httpexceptions       as exc
 
 class TtWrap:
     def __init__(self, api_id, api_hash):
