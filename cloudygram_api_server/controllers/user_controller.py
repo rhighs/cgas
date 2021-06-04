@@ -3,6 +3,7 @@ from pyramid.request                import Request
 from cloudygram_api_server.models   import UserModels
 from telethon.tl.types              import MessageMediaDocument
 from telethon.client.users          import UserMethods
+from pyramid.response               import Response
 import asyncio, concurrent.futures
 import cloudygram_api_server
 
@@ -72,7 +73,7 @@ class UserController:
 
     @action(name="downloadProfilePhoto", renderer="json", request_method="GET")
     def download_profile_photo(self):
-        phone_number = self.request.GET["phoneNumber"]
+        phone_number = self.request.matchdict["phoneNumber"][1:]
         wrap = cloudygram_api_server.get_tt()
         try:
             result = self.pool.submit(
@@ -81,8 +82,26 @@ class UserController:
             ).result()
         except Exception as e:
             return UserModels.failure(message=str(e))
-
         return UserModels.success(
             message="profile photo downloaded!",
             data=result #path where thw picture got downloaded
+        )
+
+    @action(name="logout", renderer="json", request_method="DELETE")
+    def logout(self):
+        phone_number = self.request.matchdict["phoneNumber"][1:]
+        wrap  = cloudygram_api_server.get_tt()
+        try:
+            result = self.pool.submit(
+                asyncio.run, 
+                wrap.logout(phone_number)
+            ).result()
+        except Exception as e:
+            return UserModels.failure(message=str(e))
+        if not result:
+            return UserModels.failure(message="Couldn't log out")
+
+        return UserModels.success(
+            message="log out successful!",
+            data=result
         )
