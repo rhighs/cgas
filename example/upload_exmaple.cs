@@ -30,12 +30,11 @@ namespace test_file
 
         static string DownloadFile(string messageJson)
         {
-            HttpContent jsonString = new StringContent(messageJson);
+            string message = $"{{ 'message': {messageJson} }}";
+            HttpContent jsonString = new StringContent(message, Encoding.UTF8, "application/json");
             using (var client = new HttpClient())
-            using (var formData = new MultipartFormDataContent())
             {
-                formData.Add(jsonString, "message");
-                var resp = client.PostAsync(URL+"/downloadFile", formData).Result;
+                var resp = client.PostAsync(URL+"/downloadFile", jsonString).Result;
                 return resp.Content.ReadAsStringAsync().Result;
             }
         }
