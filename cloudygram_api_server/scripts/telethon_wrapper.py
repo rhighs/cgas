@@ -125,3 +125,10 @@ class TtWrap:
         result = await client.qr_login()
         await client.disconnect()
         return result
+
+    async def deleteSession(self, phone_number):
+        client: TelegramClient = self.create_client(phone_number)
+        await client.connect()
+        result = client.log_out()
+        await client.disconnect()
+        return result
