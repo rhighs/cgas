@@ -4,6 +4,7 @@ from pyramid.httpexceptions         import HTTPUnauthorized
 from cloudygram_api_server.models   import UserModels
 from telethon.tl.types              import MessageMediaDocument
 from pyramid.response               import Response
+import json
 import asyncio, concurrent.futures
 import cloudygram_api_server
 
@@ -24,13 +25,13 @@ class UserController:
                 wrap.get_me(phone_number)
             ).result()
         except HTTPUnauthorized as u:
-            return Response(UserModels.unauthorized(),
+            return Response(json.dumps(UserModels.unauthorized()),
                             status=u.status_code)
         except Exception as e:
             response = UserModels.failure(message=str(e))
-            return Response(response, status=500)
+            return Response(json.dumps(response), status=500)
         response = UserModels.userDetails(user)
-        return Response(response, status=200)
+        return Response(json.dumps(response), status=200)
 
     @action(name="uploadFile", renderer="json", request_method="POST")
     def upload_file(self):
@@ -46,20 +47,19 @@ class UserController:
                 wrap.upload_file(phone_number=phone_number, file_name=file_name, file_stream=file_stream, mime_type=mime_type)
             ).result()
         except HTTPUnauthorized as u:
-            return Response(UserModels.unauthorized(),
-                            status=u.status_code)
-        except HTTPUnauthorized as u:
             response = UserModels.unauthorized
-            return Response(response, status=401)
+            return Response(json.dumps(response), status=401)
         except Exception as e:
+            print(str(e))
             response = UserModels.failure(message=str(e))
-            return Response(response, status=500)
-        return Response(result, status=200)
+            return Response(json.dumps(response), status=500)
+        return Response(body=json.dumps(result), status=200, content_type="application/json", charset="UTF-8")
+
     
     @action(name="downloadFile", renderer="json", request_method="POST")
     def download_file(self):
         phone_number = self.request.matchdict["phoneNumber"][1:]
-        message_json = self.json_body["message"]
+        message_json = self.request.json_body["message"]
         try:
             result: MessageMediaDocument = self.pool.submit(
                 asyncio.run,
@@ -72,7 +72,7 @@ class UserController:
             response = UserModels.failure(message=str(e))
             return Response(response, status=500)
         response = UserModels.success(message=f"File with id: {result.document.id} downloaded successfully!") 
-        return Response(response, status=200)
+        return Response(body=json.dumps(result), status=200, content_type="application/json", charset="UTF-8")
 
     @action(name="isAuthorized", renderer="json", request_method="GET")
     def is_authorized(self):
@@ -99,16 +99,16 @@ class UserController:
                 wrap.download_profile_picture(phone_number)
             ).result()
         except HTTPUnauthorized as u:
-            return Response(UserModels.unauthorized(),
+            return Response(json.dumps(UserModels.unauthorized()),
                             status=u.status_code)
         except Exception as e:
             response = UserModels.failure(message=str(e))
-            return Response(response, status=500)
+            return Response(json.dumps(response), status=500)
         response = UserModels.success(
             message="profile photo downloaded!",
             data=result #path where thw picture got downloaded
         )
-        return Response(response, status=200)
+        return Response(json.dumps(result), status=200)
 
     @action(name="logout", renderer="json", request_method="DELETE")
     def logout(self):
@@ -120,16 +120,16 @@ class UserController:
                 wrap.logout(phone_number)
             ).result()
         except HTTPUnauthorized as u:
-            return Response(UserModels.unauthorized(),
+            return Response(json.dumps(UserModels.unauthorized()),
                             status=u.status_code)
         except Exception as e:
-            return Response(UserModels.failure(message=str(e)),
+            return Response(json.dumps(UserModels.failure(message=str(e))),
                             status=500)
         if not result:
-            return Response(UserModels.failure(message="Clouldn't log out"),
+            return Response(json.dumps(UserModels.failure(message="Clouldn't log out")),
                             status=200)
         response = UserModels.success(
             message="log out successful!",
             data=result
         )
-        return Response(response, startus=200)
+        return Response(body=json.dumps(response), status=200, content_type="application/json", charset="UTF-8")
