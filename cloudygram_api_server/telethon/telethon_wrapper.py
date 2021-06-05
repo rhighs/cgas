@@ -103,7 +103,7 @@ class TtWrap:
         await client.disconnect()
         return result.to_json()
 
-    async def download_file(self, phone_number, message_json):
+    async def download_file(self, phone_number, message_json, path):
         client = self.create_client(phone_number)
         print(f"message json -> {message_json}")
         m = parse_message(message_json)
@@ -111,7 +111,10 @@ class TtWrap:
         if not await client.is_user_authorized():
             await client.disconnect()
             raise exc.HTTPUnauthorized()
-        await client.download_media(m)
+        if path is not None:
+            await client.download_media(m, path=path)
+        else:
+            await client.download_media(m)
         await client.disconnect() 
         return m
 
