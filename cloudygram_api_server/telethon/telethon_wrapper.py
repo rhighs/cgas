@@ -105,13 +105,15 @@ class TtWrap:
 
     async def download_file(self, phone_number, message_json):
         client = self.create_client(phone_number)
+        print(f"message json -> {message_json}")
         m = parse_message(message_json)
         await client.connect()
         if not await client.is_user_authorized():
-            client.disconnect()
+            await client.disconnect()
             raise exc.HTTPUnauthorized()
         await client.download_media(m)
         await client.disconnect() 
+        return m
 
     async def download_profile_photo(self, phone_number):
         client = self.create_client(phone_number)

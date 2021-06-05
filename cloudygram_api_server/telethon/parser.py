@@ -10,7 +10,7 @@ def parse_message(message_json):
     message_dict = json.loads(s=message_json)
     if(message_dict["_"] != "MessageMediaDocument"):
         raise Exception("Invalid message type, must provide Document")
-    document_dict: dict= json.loads(json.dumps(obj=message_dict["document"]))
+    document_dict: dict = message_dict["document"]
     if(document_dict["_"] != "Document"):
         raise Exception("Invalid document type, must provide Document")
     document = Document(
