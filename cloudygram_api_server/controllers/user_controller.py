@@ -1,3 +1,4 @@
+from pyramid.url import static_url
 from pyramid_handlers               import action
 from pyramid.request                import Request
 from pyramid.httpexceptions         import HTTPUnauthorized
@@ -54,7 +55,6 @@ class UserController:
             response = UserModels.failure(message=str(e))
             return Response(json.dumps(response), status=500)
         return Response(body=json.dumps(result), status=200, content_type="application/json", charset="UTF-8")
-
     
     @action(name="downloadFile", renderer="json", request_method="POST")
     def download_file(self):
@@ -65,14 +65,19 @@ class UserController:
                 asyncio.run,
                 cloudygram_api_server.get_tt().download_file(phone_number=phone_number, message_json=message_json)
             ).result()
+            response = UserModels.success(message=f"File witd id: {result.document.id} downloaded successfully!") 
         except HTTPUnauthorized as u:
-            return Response(UserModels.unauthorized(),
+            return Response(json.dumps(UserModels.unauthorized()),
+                            charset="UTF-8",
+                            content_type="application/json",
                             status=u.status_code)
         except Exception as e:
             response = UserModels.failure(message=str(e))
-            return Response(response, status=500)
-        response = UserModels.success(message=f"File with id: {result.document.id} downloaded successfully!") 
-        return Response(body=json.dumps(result), status=200, content_type="application/json", charset="UTF-8")
+            return Response(json.dumps(response),
+                            charset="UTF-8",
+                            content_type="application/json",
+                            status=500)
+        return Response(body=json.dumps(response), charset="UTF-8", content_type="application/json", status=200)
 
     @action(name="isAuthorized", renderer="json", request_method="GET")
     def is_authorized(self):
