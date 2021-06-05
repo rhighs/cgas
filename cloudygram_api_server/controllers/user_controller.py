@@ -60,10 +60,13 @@ class UserController:
     def download_file(self):
         phone_number = self.request.matchdict["phoneNumber"][1:]
         message_json = self.request.json_body["message"]
+        path=None
+        if "path" in self.request.json_body:
+            path = self.request.json_body["path"]
         try:
             result: MessageMediaDocument = self.pool.submit(
                 asyncio.run,
-                cloudygram_api_server.get_tt().download_file(phone_number=phone_number, message_json=message_json)
+                cloudygram_api_server.get_tt().download_file(phone_number=phone_number, message_json=message_json, path=path)
             ).result()
             response = UserModels.success(message=f"File witd id: {result.document.id} downloaded successfully!") 
         except HTTPUnauthorized as u:
@@ -92,7 +95,7 @@ class UserController:
             if result
             else UserModels.failure(message="User is not authrized")
         )
-        return Response(response, status=200)
+        return Response(json.dumps(response), status=200)
 
     @action(name="downloadProfilePhoto", renderer="json", request_method="GET")
     def download_profile_photo(self):
