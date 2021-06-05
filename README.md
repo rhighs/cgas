@@ -24,11 +24,12 @@ Before actually running the application make sure to create a keys.json file in 
 ```
 To get your api keys simply go to [my.telegram.org](https://my.telegram.org/auth?to=apps)
 
-## Getting started
+# Getting started
 
 When running the server for the first time, make sure to a sessions/ folder in the project root directory, this is where telethon will place all the session file for each account you are going to log in.
 
-by calling `http://ip:port/sendCode?phoneNumber=<international_formatted_number>` via GET method you will receive as json response as follows:
+## Receive a code
+By calling `http://ip:port/sendCode?phoneNumber=<international_formatted_number>` via GET method you will receive as json response as follows:
 ```json
 {
     "isSuccess": True,
@@ -37,7 +38,7 @@ by calling `http://ip:port/sendCode?phoneNumber=<international_formatted_number>
 ```
 along with an official telegram message indicating the received confirmation code to use in the next step.
 
-# Validating your code
+## Validating your code
 
 All you need to do now is calling `http://ip:port/signin` via POST method passing a json body as follows:
 ```
