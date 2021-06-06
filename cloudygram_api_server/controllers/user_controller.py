@@ -84,7 +84,7 @@ class UserController:
 
     @action(name="isAuthorized", renderer="json", request_method="GET")
     def is_authorized(self):
-        phone_number = self.request.GET["phoneNumber"] 
+        phone_number = self.request.matchdict["phoneNumber"] 
         wrap = cloudygram_api_server.get_tt()
         result = self.pool.submit(
             asyncio.run,
