@@ -5,9 +5,8 @@ using System.Collections;
 using System.Text;
 using System.Text.Json;
 using System.Net.Http;
-using System.Threading.Tasks;
 
-namespace test_file
+namespace example
 {
     class Program
     {
