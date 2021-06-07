@@ -31,7 +31,7 @@ class UserController:
 
     @action(name="uploadFile", renderer="json", request_method="POST")
     def upload_file(self):
-        phone_number = self.request.matchdict["phoneNumber"][1:] #remove + at the beginning
+        phone_number = self.request.matchdict["phoneNumber"][1:]
         file_stream = self.request.POST["file"].file
         file_name = self.request.POST["file"].filename
         mime_type = self.request.POST["mimeType"]
@@ -69,7 +69,7 @@ class UserController:
 
     @action(name="isAuthorized", renderer="json", request_method="GET")
     def is_authorized(self):
-        phone_number = self.request.matchdict["phoneNumber"] 
+        phone_number = self.request.matchdict["phoneNumber"][1:]
         wrap = cloudygram_api_server.get_tt()
         result = self.pool.submit(
             asyncio.run,
