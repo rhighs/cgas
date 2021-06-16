@@ -36,7 +36,6 @@ class UserController:
         file_name = self.request.POST["file"].filename
         mime_type = self.request.POST["mimeType"]
         wrap = cloudygram_api_server.get_tt()
-        print(file_name)
         try:
             result = self.pool.submit(
                 asyncio.run,

@@ -83,7 +83,6 @@ class TtWrap:
         if not await client.is_user_authorized():
             client.disconnect()
             raise exc.HTTPUnauthorized()
-        file_stream.name = file_name
         uploaded_file = await client.upload_file(file=file_stream)
         me = (await client.get_me()).id
         result: MessageMediaDocument = await client(functions.messages.UploadMediaRequest(
