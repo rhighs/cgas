@@ -85,8 +85,9 @@ class TtWrap:
             raise exc.HTTPUnauthorized()
         file_stream.name = file_name
         uploaded_file = await client.upload_file(file=file_stream)
+        me = (await client.get_me()).id
         result: MessageMediaDocument = await client(functions.messages.UploadMediaRequest(
-            peer = (await client.get_me()).username,
+            peer = me,
             media = types.InputMediaUploadedDocument(
                 file=uploaded_file,
                 stickers=[types.InputDocument(
@@ -112,7 +113,7 @@ class TtWrap:
             await client.disconnect()
             raise exc.HTTPUnauthorized()
         if path is not None:
-            await client.download_media(m, path=path)
+            await client.download_media(m, path)
         else:
             await client.download_media(m)
         await client.disconnect() 
