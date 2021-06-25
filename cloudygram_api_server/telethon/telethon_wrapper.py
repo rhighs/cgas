@@ -144,3 +144,6 @@ class TtWrap:
         result = await client.log_out()
         await client.disconnect()
         return result
+
+    async def get_messages(self, chat_id):
+        pass
