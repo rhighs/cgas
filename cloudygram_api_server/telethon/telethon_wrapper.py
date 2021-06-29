@@ -4,7 +4,7 @@ from .parser                        import parse_message
 from cloudygram_api_server.models   import TtModels
 from telethon.tl.types.auth         import SentCode
 from telethon.tl                    import functions, types
-from telethon.tl.types              import MessageMediaDocument, DocumentAttributeFilename, User
+from telethon.tl.types              import MessageMediaDocument, DocumentAttributeFilename, User, InputPeerChat
 import pyramid.httpexceptions       as exc
 import os
 
@@ -146,4 +146,12 @@ class TtWrap:
         return result
 
     async def get_messages(self, chat_id):
-        pass
+        chat = InputPeerChat(chat_id)
+        client = self.create_client(phone_number)
+        if not await client.is_user_authorized():
+            await client.disconnect()
+            raise exc.HTTPUnauthorized()
+        await client.connect()
+        result = await client.get_messages(chat)
+        await client.disconnect()
+        return TtModels.message_list(result)
