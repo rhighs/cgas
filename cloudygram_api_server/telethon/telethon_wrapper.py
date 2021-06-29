@@ -154,4 +154,4 @@ class TtWrap:
         await client.connect()
         result = await client.get_messages(chat)
         await client.disconnect()
-        return TtModels.message_list(result)
+        return result
