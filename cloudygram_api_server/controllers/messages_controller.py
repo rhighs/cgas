@@ -22,6 +22,6 @@ class MessagesController(object):
         self.wrap.create_session(phone_number) 
         result = self.pool.submit(
                 asyncio.run,
-                self.wrap.get_messages(chat_id)
+                self.wrap.get_messages(phone_number, chat_id)
                 )
         return jres(TtModels.message_list(result))

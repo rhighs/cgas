@@ -145,7 +145,7 @@ class TtWrap:
         await client.disconnect()
         return result
 
-    async def get_messages(self, chat_id):
+    async def get_messages(self, phone_number, chat_id):
         chat = InputPeerChat(chat_id)
         client = self.create_client(phone_number)
         if not await client.is_user_authorized():
