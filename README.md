@@ -1,4 +1,3 @@
-
 ## What's this
 Cloudygram-api-server is a basic web server which sole purpose is to serve telethon's basic functionalities.
 this way any desired programming language gains access to MTProto Telegram's features, via a fast and reliable python module.
@@ -10,12 +9,11 @@ For more info about telethon visit [telethon's repo.](https://github.com/LonamiW
 $ git clone https://github.com/skurob/cloudygram-api-server
 $ cd cloudygram-api-server
 $ pip3 install -r requirements.txt
+$ mkdir sessions
 $ python3 main.py
-
 ```
 
 Before actually running the application make sure to create a keys.json file in the root folder, containing the following:
-
 ```json
 {
     "api_id": <your_api_id>,
@@ -25,33 +23,34 @@ Before actually running the application make sure to create a keys.json file in 
 To get your api keys simply go to [my.telegram.org](https://my.telegram.org/auth?to=apps)
 
 # Getting started
-
 When running the server for the first time, make sure to create a sessions/ folder in the project root directory, this is where telethon will place all the session files for each account you are going to log in.
 
 ## Receive a code
-By calling `http://ip:port/sendCode?phoneNumber=<international_formatted_number>` via GET method you will receive a json response as follows:
+Path: `/sendCode?phoneNumber=<international_formatted_number>`
+Calling the path above via GET method you will receive a json response as follows:
 ```json
 {
     "isSuccess": True,
-    "phoneCodeHash": <hash_here>
+    "phoneCodeHash": "<hash_here>"
 }
 ```
 along with an official telegram message indicating the received confirmation code to use in the next step.
 
 ## Validating your code
-
-All you need to do now is calling `http://ip:port/signin` via POST method passing a json body as follows:
+Path: `/signin`
+All you need to do now is calling via the api via POST method, passing a json body as follows:
 ```json
 {
-    "phoneNumber": <international_formatted_number>,
-    "phoneCode": <the_received_code>,
-    "phoneCodeHash": <from_the_previous_request>
+    "phoneNumber": "<international_formatted_number>",
+    "phoneCode": "<the_received_code>",
+    "phoneCodeHash": "<from_the_previous_request>"
 }
 ```
 If everything ran smoothly you will receive a positive response and a telegram notification, telling you successfully logged via the cloudygram-api-server.
 
 ## Getting user informations
-Again this is just a simple GET request to `http://ip:port/user/<international_formatted_number>/userInfo`
+Path: `/user/<international_formatted_number>/userInfo`
+Just a simple GET request
 
 js example:
 ```js
@@ -67,7 +66,7 @@ console.log(await get_user_info(url));
 
 /*
 {
-    "userId": 12314
+    "userId": 12314,
     "username": "foobar",
     "firstName": "foo",
     "lastName": "bar",
@@ -75,6 +74,28 @@ console.log(await get_user_info(url));
 }
 */
 ```
+## Getting messages in a chat
+Path: `/user/<international_formatted_number>/messages/getMessages`
+This api call requires you to already have a chat-id from which you want to fetch its messages, there are few ways to do this but none are provided by this application.
+To get a chat-id possible solutions are:
+
+- Getting it using telethon message events.
+- Using a [tdlib](https://core.telegram.org/tdlib/docs/classtd_1_1td__api_1_1search_public_chats.html) function which will search for chats given a username.
+
+When successfully called this method, you will then receive a response like so:
+```json
+{
+    "isSuccess": True,
+    "data": [
+        {
+            "id": 12313,
+            "fromPeer": "<userPeerId>", 
+            "content": "<string_message_content>"
+        }
+    ]
+}
+```
+
 ## Contributing
 This project does NOT aim at becoming a 1:1 Telethon API but rather aims at the essentials only, if you have any suggestion
 pull requests are welcome.
