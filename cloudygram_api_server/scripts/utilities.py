@@ -11,7 +11,7 @@ def jres(model, status):
 class CGMessage:
     def __init__(self, id, from_peer: str, str_content: str):
         self.id_key = "id"
-        self.from_key = "from_peer"
+        self.from_key = "fromPeer"
         self.content_key = "content"
         self.id = id
         self.from_peer = from_peer
@@ -19,9 +19,9 @@ class CGMessage:
 
     def as_dict(self):
         return {
-            "id": self.id,
-            "from_peer": self.from_peer,
-            "content": self.str_content
+            self.id_key: self.id,
+            self.from_key: self.from_peer,
+            self.content_key: self.str_content
         }
 
     def __setitem__(self, key, item):
