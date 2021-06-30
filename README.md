@@ -26,7 +26,7 @@ To get your api keys simply go to [my.telegram.org](https://my.telegram.org/auth
 When running the server for the first time, make sure to create a sessions/ folder in the project root directory, this is where telethon will place all the session files for each account you are going to log in.
 
 ## Receive a code
-Path: `/sendCode?phoneNumber=<international_formatted_number>`
+Path: `/sendCode?phoneNumber=<international_formatted_number>`\
 Calling the path above via GET method you will receive a json response as follows:
 ```json
 {
@@ -37,7 +37,7 @@ Calling the path above via GET method you will receive a json response as follow
 along with an official telegram message indicating the received confirmation code to use in the next step.
 
 ## Validating your code
-Path: `/signin`
+Path: `/signin`\
 All you need to do now is calling via the api via POST method, passing a json body as follows:
 ```json
 {
@@ -49,7 +49,7 @@ All you need to do now is calling via the api via POST method, passing a json bo
 If everything ran smoothly you will receive a positive response and a telegram notification, telling you successfully logged via the cloudygram-api-server.
 
 ## Getting user informations
-Path: `/user/<international_formatted_number>/userInfo`
+Path: `/user/<international_formatted_number>/userInfo`\
 Just a simple GET request
 
 js example:
@@ -75,8 +75,8 @@ console.log(await get_user_info(url));
 */
 ```
 ## Getting messages in a chat
-Path: `/user/<international_formatted_number>/messages/getMessages`
-This api call requires you to already have a chat-id from which you want to fetch its messages, there are few ways to do this but none are provided by this application.
+Path: `/user/<international_formatted_number>/messages/getMessages`\
+This api call requires you to already have a chat-id from which you want to fetch its messages, there are few ways to do this but none are provided by this application.\
 To get a chat-id possible solutions are:
 
 - Getting it using telethon message events.
