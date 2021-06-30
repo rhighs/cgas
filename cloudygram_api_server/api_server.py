@@ -1,5 +1,4 @@
-from cloudygram_api_server.controllers      import HomeController
-from cloudygram_api_server.controllers      import UserController
+from cloudygram_api_server.controllers      import HomeController, UserController, MessagesController
 from wsgiref.simple_server                  import make_server
 from pyramid.config                         import Configurator
 from cloudygram_api_server.telethon         import TtWrap
@@ -11,6 +10,7 @@ def configure(**settings):
         config.include('pyramid_handlers')
         config.add_handler("home", "/{action}", handler=HomeController)
         config.add_handler("user", "/user/{phoneNumber}/{action}", handler=UserController)
+        config.add_handler("messages", "/user/{phoneNumber}/messages/{action}", handler=UserController)
         config.scan()
     return config.make_wsgi_app()
 
