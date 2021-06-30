@@ -7,7 +7,7 @@ from cloudygram_api_server.scripts  import jres
 import asyncio, concurrent.futures
 import cloudygram_api_server
 
-class MessageController(object):
+class MessagesController(object):
     __autoexpose__ = None
 
     def __init__(self, request):
