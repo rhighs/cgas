@@ -65,6 +65,17 @@ class TtWrap:
         await client.disconnect()
         return result #of type User
 
+    async def signup(self, code, first_name, last_name, phone=None, phone_code_hash=None):
+        client = self.create_client()
+        await client.connect()
+        try:
+            result: User = await client.signup(code, first_name, last_name, phone, phone_code_hash)
+        except Exception as e:
+            await client.disconnect()
+            return TtModels.sing_in_failure(str(e))
+        await client.disconnect()
+        return result
+
     async def get_me(self, phone_number):
         client = self.create_client(phone_number)
         await client.connect()
