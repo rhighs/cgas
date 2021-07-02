@@ -15,7 +15,7 @@ class TtWrap:
         self.test_msg = None
 
     def create_client(self, phone_number):
-        workdir = os.path.join(os.getcwd(),"sessions",phone_number)
+        workdir = os.path.join(os.getcwd(), "sessions", phone_number)
         return TelegramClient(api_id=self.api_id, api_hash=self.api_hash, session=workdir)
     
     async def is_authorized(self, phone_number):
