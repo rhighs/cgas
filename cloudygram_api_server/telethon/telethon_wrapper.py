@@ -22,21 +22,22 @@ class TtWrap:
         client = self.create_client(phone_number)
         await client.connect()
         result = await client.is_user_authorized()
+        await client.disconnect()
         return result
 
     async def send_private_message(self, phone_number, message):
         client = self.create_client(phone_number) 
-        client.connect()
+        await client.connect()
         if not await client.is_user_authorized():
-            client.disconnect()
+            await client.disconnect()
             raise exc.HTTPUnauthorized()
-        client.send_message("me", message)
-        client.disconnect()
+        await client.send_message("me", message)
+        await client.disconnect()
 
-    def create_session(self, phone_number):
+    async def create_session(self, phone_number):
         client = self.create_client(phone_number)
-        client.connect()
-        client.disconnect()
+        await client.connect()
+        await client.disconnect()
 
     async def send_code(self, phone_number):
         client = self.create_client(phone_number)
@@ -65,11 +66,17 @@ class TtWrap:
         await client.disconnect()
         return result #of type User
 
-    async def signup(self, code, first_name, last_name, phone=None, phone_code_hash=None):
-        client = self.create_client()
+    async def signup(self, phone_number, code, phone_code_hash, first_name, last_name, phone=None):
+        client = self.create_client(phone_number)
         await client.connect()
         try:
-            result: User = await client.signup(code, first_name, last_name, phone, phone_code_hash)
+            result: User = await client.sign_up(
+                    code=code,
+                    first_name=first_name, 
+                    last_name=last_name, 
+                    phone=phone,
+                    phone_code_hash=phone_code_hash
+                    )
         except Exception as e:
             await client.disconnect()
             return TtModels.sing_in_failure(str(e))
@@ -80,7 +87,7 @@ class TtWrap:
         client = self.create_client(phone_number)
         await client.connect()
         if not await client.is_user_authorized():
-            client.disconnect()
+            await client.disconnect()
             raise exc.HTTPUnauthorized()
         result = await client.get_me()
         await client.disconnect()
@@ -116,7 +123,6 @@ class TtWrap:
 
     async def download_file(self, phone_number, message_json, path):
         client = self.create_client(phone_number)
-        print(f"message json -> {message_json}")
         m = parse_message(message_json)
         await client.connect()
         if not await client.is_user_authorized():
