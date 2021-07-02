@@ -26,7 +26,6 @@ class HomeController(object):
     @action(name="sendCode", renderer="json", request_method="GET")
     def send_code(self):
         phone_number = self.request.GET["phoneNumber"][1:]
-        wrap = cloudygram_api_server.get_tt()
         result = self.pool.submit(
                 asyncio.run,
                 self.wrap.send_code(phone_number)
@@ -41,12 +40,13 @@ class HomeController(object):
         phone_number = body["phoneNumber"][1:]
         phone_code_hash = body["phoneCodeHash"]
         phone_code = body["phoneCode"]
-        self.wrap = cloudygram_api_server.get_tt()
         result = self.pool.submit(
                 asyncio.run,
-                self.wrap.signin(phone_number=phone_number,
-                    phone_code_hash=phone_code_hash,
-                    phone_code=phone_code)
+                self.wrap.signin(
+                    phone_number,
+                    phone_code_hash,
+                    phone_code
+                    )
                 ).result()
         if type(result) is dict and SUCCESS_KEY in result:
             return result
@@ -65,20 +65,20 @@ class HomeController(object):
     @action(name="singup", renderer="json", request_method="POST")
     def sign_up(self):
         body = self.request.json_body
-        code = body["phoneCode"]
+        phone_code = body["phoneCode"]
+        phone_number = body["phone_number"]
         first_name = body["firstName"]
         last_name = body["lastName"]
         phone_code_hash = body["phoneCodeHash"]
         result = self.pool.submit(
                 asyncio.run,
                 self.wrap.signup(
-                    code,
+                    phone_number,
+                    phone_code,
+                    phone_code_hash,
                     first_name,
-                    last_name,
-                    phone_code_hash=phone_code_hash
+                    last_name
                     )
                 ).result()
         return UserModels.userDetails(result)
-
-
 
