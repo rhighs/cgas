@@ -20,7 +20,10 @@ class HomeController(object):
     @action(name="addSession", renderer="json", request_method="GET")
     def add_account(self):
         phoneNumber = self.request.GET["phoneNumber"][1:]
-        self.wrap.create_session(phoneNumber)
+        result = self.pool.submit(
+                asyncio.run,
+                self.wrap.create_session(phoneNumber)
+                ).result()
         return HomeModels.success(message=f"Session with: {phoneNumber} created.")
 
     @action(name="sendCode", renderer="json", request_method="GET")
