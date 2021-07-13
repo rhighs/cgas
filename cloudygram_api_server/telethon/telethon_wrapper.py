@@ -58,11 +58,6 @@ class TtWrap:
         except Exception as e:
             await client.disconnect()
             return TtModels.sing_in_failure(str(e))
-            """
-            if false
-            await client.disconnect()
-            return TtModels.sing_in_failure("Requires terms of service acceptance")
-            """
         await client.disconnect()
         return result #of type User
 
@@ -100,7 +95,7 @@ class TtWrap:
             client.disconnect()
             raise exc.HTTPUnauthorized()
         uploaded_file = await client.upload_file(file=file_stream)
-        me = (await client.get_me()).id
+        me = await client.get_me()
         result: MessageMediaDocument = await client(functions.messages.UploadMediaRequest(
             peer = me,
             media = types.InputMediaUploadedDocument(
@@ -108,7 +103,7 @@ class TtWrap:
                 stickers=[types.InputDocument(
                     id=uploaded_file.id,
                     access_hash=uploaded_file.id,
-                    file_reference=b'some\x7f data \xfa here'
+                    file_reference=b'a\x7ffile\xfareference'
                 )],
                 ttl_seconds=100,
                 mime_type=mime_type,
@@ -117,7 +112,6 @@ class TtWrap:
                     ]
             )
         ))
-        self.temp_msg = result #this is temp
         await client.disconnect()
         return result.to_json()
 
@@ -165,10 +159,12 @@ class TtWrap:
     async def get_messages(self, phone_number, chat_id):
         chat = InputPeerChat(chat_id)
         client = self.create_client(phone_number)
+        me = await client.get_me()
+        entity = client.get_entity(me.username)
         if not await client.is_user_authorized():
             await client.disconnect()
             raise exc.HTTPUnauthorized()
         await client.connect()
-        result = await client.get_messages(chat)
+        result = await client.get_messages(entity)
         await client.disconnect()
         return result
