@@ -10,7 +10,7 @@ def configure(**settings):
         config.include('pyramid_handlers')
         config.add_handler("home", "/{action}", handler=HomeController)
         config.add_handler("user", "/user/{phoneNumber}/{action}", handler=UserController)
-        config.add_handler("messages", "/user/{phoneNumber}/messages/{action}", handler=UserController)
+        config.add_handler("messages", "/user/{phoneNumber}/messages/{action}", handler=MessagesController)
         config.scan()
     return config.make_wsgi_app()
 
