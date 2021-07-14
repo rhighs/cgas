@@ -41,10 +41,6 @@ class CGMessage:
             return self.str_content
 
     @staticmethod
-    def map_from_tt(t_message: Message):
-        return CGMessage(
-                t_message.id,
-                t_message.peer_id.user_id,
-                t_message.message
-                )
+    def map_from_tt(t_message: Message) -> str:
+        return json.loads(t_message.to_json()) #temporary need to correct metacharacters
 
