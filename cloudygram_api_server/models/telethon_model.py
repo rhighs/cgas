@@ -18,10 +18,10 @@ class TtModels:
 
     @staticmethod
     def message_list(messages):
-        message_list = []
+        _list = []
         for m in messages:
-            message_list.append(CGMessage.map_from_tt(m))
+            _list.append(CGMessage.map_from_tt(m))
         return {
             SUCCESS_KEY: True,
-            DATA_KEY: message_list
+            DATA_KEY: _list
         }
