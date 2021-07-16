@@ -45,7 +45,7 @@ class UserController:
             return jres(UserModels.unauthorized(), u.status_code)
         except Exception as e:
             return jres(UserModels.failure(str(e)), status=500)
-        return jres(result,200)
+        return jres(result, 200)
     
     @action(name="downloadFile", renderer="json", request_method="POST")
     def download_file(self):
