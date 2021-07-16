@@ -1,6 +1,6 @@
 from telethon                       import TelegramClient
 from io                             import BytesIO
-from .parser                        import parse_message
+from .parser                        import parse_updates
 from cloudygram_api_server.models   import TtModels
 from telethon.tl.types.auth         import SentCode
 from telethon.tl                    import functions, types
@@ -123,17 +123,17 @@ class TtWrap:
 
     async def download_file(self, phone_number, message_json, path):
         client = self.create_client(phone_number)
-        m = parse_message(message_json)
+        media: MessageMediaDocument = parse_updates(message_json)
         await client.connect()
         if not await client.is_user_authorized():
             await client.disconnect()
             raise exc.HTTPUnauthorized()
         if path is not None:
-            await client.download_media(m, path)
+            await client.download_media(media, path)
         else:
-            await client.download_media(m)
+            await client.download_media(media)
         await client.disconnect() 
-        return m
+        return media.to_json()
 
     async def download_profile_photo(self, phone_number):
         client = self.create_client(phone_number)
