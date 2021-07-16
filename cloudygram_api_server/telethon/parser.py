@@ -1,19 +1,18 @@
 import json
 from telethon.tl.types import MessageMediaDocument, Document
 
-def parse_message(message_json):
-    if message_json[1:] == "\"":
-        message_json = message_json[1:]
-    if message_json[:-1] == "\"":
-        message_json = message_json[:-1]
-    message_json = message_json.replace("\\", "")
-    message_dict = json.loads(s=message_json)
-    if(message_dict["_"] != "MessageMediaDocument"):
-        raise Exception("Invalid message type, must provide Document")
-    document_dict: dict = message_dict["document"]
+def remove_buggy_chars(json_string):
+    if json_string[1:] == "\"":
+        json_string = json_string[1:]
+    if json_string [:-1] == "\"":
+        json_string = json_string[:-1]
+    json_string = json_string.replace("\\", "")
+    return json.loads(json_string)
+
+def document_from_dict(document_dict):
     if(document_dict["_"] != "Document"):
         raise Exception("Invalid document type, must provide Document")
-    document = Document(
+    return Document(
         id=             document_dict["id"],
         access_hash=    document_dict["access_hash"],
         file_reference= document_dict["file_reference"],
@@ -26,4 +25,21 @@ def parse_message(message_json):
         video_thumbs=   document_dict["video_thumbs"]
     )
 
-    return MessageMediaDocument(document=document, ttl_seconds=message_dict["ttl_seconds"])
+def parse_message_media(message_json):
+    message_dict = remove_buggy_chars(message_json)
+    if(message_dict["_"] != "MessageMediaDocument"):
+        raise Exception("Invalid message type, must provide Document")
+    document_dict = message_dict["document"]
+    return MessageMediaDocument(
+        document=document_from_dict(document_dict),
+        ttl_seconds=message_dict["ttl_seconds"]
+    )
+
+def parse_updates(update_json):
+    update_dict = remove_buggy_chars(update_json)
+    media_dict = update_dict["updates"][1]["message"]["media"]
+    return MessageMediaDocument(
+        document=document_from_dict(media_dict["document"]),
+        ttl_seconds=media_dict["ttl_seconds"]
+    )
+
