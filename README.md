@@ -30,7 +30,7 @@ Path: `/sendCode?phoneNumber=<international_formatted_number>`\
 Calling the path above via GET method you will receive a json response as follows:
 ```json
 {
-    "isSuccess": True,
+    "isSuccess": true,
     "phoneCodeHash": "<hash_here>"
 }
 ```
@@ -85,12 +85,13 @@ To get a chat-id possible solutions are:
 When successfully called this method, you will then receive a response like so:
 ```json
 {
-    "isSuccess": True,
+    "isSuccess": true,
     "data": [
         {
-            "id": 12313,
-            "fromPeer": "<userPeerId>", 
-            "content": "<string_message_content>"
+            "message object": "containing info"
+        },
+        {
+            "another message object": "containing info"
         }
     ]
 }
