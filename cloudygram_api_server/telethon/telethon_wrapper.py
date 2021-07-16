@@ -4,7 +4,7 @@ from .parser                        import parse_message
 from cloudygram_api_server.models   import TtModels
 from telethon.tl.types.auth         import SentCode
 from telethon.tl                    import functions, types
-from telethon.tl.types              import MessageMediaDocument, DocumentAttributeFilename, User, InputPeerChat, InputUserSelf
+from telethon.tl.types              import MessageMediaDocument, DocumentAttributeFilename, User, InputPeerChat, InputUserSelf, UpdateShortMessage
 import pyramid.httpexceptions       as exc
 import os
 
@@ -96,24 +96,30 @@ class TtWrap:
             raise exc.HTTPUnauthorized()
         uploaded_file = await client.upload_file(file=file_stream)
         me = await client.get_me()
-        result: MessageMediaDocument = await client(functions.messages.UploadMediaRequest(
-            peer = me,
-            media = types.InputMediaUploadedDocument(
-                file=uploaded_file,
-                stickers=[types.InputDocument(
-                    id=uploaded_file.id,
-                    access_hash=uploaded_file.id,
-                    file_reference=b'a\x7ffile\xfareference'
-                )],
-                ttl_seconds=100,
-                mime_type=mime_type,
-                attributes=[
-                    DocumentAttributeFilename(file_name)
-                    ]
-            )
-        ))
+        media = types.InputMediaUploadedDocument(
+            file=uploaded_file,
+            stickers=[types.InputDocument(
+                id=uploaded_file.id,
+                access_hash=uploaded_file.id,
+                file_reference=b'a\x7ffile\xfareference'
+            )],
+            ttl_seconds=100,
+            mime_type=mime_type,
+            attributes=[
+                DocumentAttributeFilename(file_name)
+                ]
+        )
+
+        try: 
+            updates: UpdateShortMessage = await client(functions.messages.SendMediaRequest(
+                peer = me,
+                media = media,
+                message = "document id: " + str(media.stickers[0].id)
+                ))
+        except Exception as e:
+            print(str(e))
         await client.disconnect()
-        return result.to_json()
+        return updates.to_json()
 
     async def download_file(self, phone_number, message_json, path):
         client = self.create_client(phone_number)
