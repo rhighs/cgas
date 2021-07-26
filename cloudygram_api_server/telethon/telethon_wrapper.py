@@ -135,8 +135,6 @@ class TtWrap:
                 await client.download_media(media)
         try:
             await try_download()
-            ref = await file_refresh(client, media.document.id)
-            print(str(ref))
         except Exception as e:
             #The main cause of this exception is an invalid file reference, find the new one and retry.
             print("Download file exception:", str(e))#temporary log error
@@ -195,7 +193,6 @@ async def file_refresh(client_instance: TelegramClient, document_id) -> bytes:
     messages = await client_instance.get_messages(InputUserSelf(), None)
     result = [m for m in messages if type(m.media) is MessageMediaDocument]
     for m in result:
-        print(m.to_json())
         if m.document.id == document_id:
             return m.document.file_reference
     return None
