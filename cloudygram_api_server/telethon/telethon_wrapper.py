@@ -128,11 +128,20 @@ class TtWrap:
         if not await client.is_user_authorized():
             await client.disconnect()
             raise exc.HTTPUnauthorized()
-        if path is not None:
-            await client.download_media(media, path)
-        else:
-            await client.download_media(media)
-        await client.disconnect() 
+        async def try_download():
+            if path is not None:
+                await client.download_media(media, path)
+            else:
+                await client.download_media(media)
+            await client.disconnect() 
+        try:
+            await try_download()
+        except Exception as e:
+            #The main cause of this exception is an invalid file reference, find the new one and retry.
+            print("Download file exception:", str(e))#temporary log error
+            ref = file_refresh(client, media.document.id)
+            media.document.file_reference = ref
+            await try_download()
         return media.to_json()
 
     async def download_profile_photo(self, phone_number):
@@ -173,14 +182,15 @@ class TtWrap:
         return result
 
 """
-    Amongst all the private messages, find the one with the mathing message id
+    Amongst all the private messages, find the one with the mathing document id
     then gather the file_reference and return it to the caller.
-    This operation might require some time since its requiring all user messages,
+    This operation might require some time since its fetching for all user messages,
     fairly enough this procedure is not called much frequently.
 
     Returns: bytes
 """
-async def file_refresh(client_instance: TelegramClient, message_id) -> bytes:
-    messages = client_instance.get_messages(InputUserSelf(), None)
-    result = [m for m in messages if m.id == message_id]
-    return result.media.document.file_reference
+async def file_refresh(client_instance: TelegramClient, document_id) -> bytes:
+    messages = await client_instance.get_messages(InputUserSelf(), None)
+    result = [m for m in messages if m.media is not None]
+    result = [m for m in result if m.media.document.id == document_id]
+    return result[0].media.document.file_reference
