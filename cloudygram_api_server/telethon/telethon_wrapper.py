@@ -133,15 +133,17 @@ class TtWrap:
                 await client.download_media(media, path)
             else:
                 await client.download_media(media)
-            await client.disconnect() 
         try:
             await try_download()
+            ref = await file_refresh(client, media.document.id)
+            print(str(ref))
         except Exception as e:
             #The main cause of this exception is an invalid file reference, find the new one and retry.
             print("Download file exception:", str(e))#temporary log error
-            ref = file_refresh(client, media.document.id)
+            ref = await file_refresh(client, media.document.id)
             media.document.file_reference = ref
             await try_download()
+        await client.disconnect() 
         return media.to_json()
 
     async def download_profile_photo(self, phone_number):
@@ -187,10 +189,13 @@ class TtWrap:
     This operation might require some time since its fetching for all user messages,
     fairly enough this procedure is not called much frequently.
 
-    Returns: bytes
+    Returns: bytes, None in case of no result found
 """
 async def file_refresh(client_instance: TelegramClient, document_id) -> bytes:
     messages = await client_instance.get_messages(InputUserSelf(), None)
-    result = [m for m in messages if m.media is not None]
-    result = [m for m in result if m.media.document.id == document_id]
-    return result[0].media.document.file_reference
+    result = [m for m in messages if type(m.media) is MessageMediaDocument]
+    for m in result:
+        print(m.to_json())
+        if m.document.id == document_id:
+            return m.document.file_reference
+    return None

@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "wQY+62t4AromRPj3gZW5ArZABApO1hbqUAnoS4wQzGQBVCWjmC+QWTHuzOCqDePxLEpVF8+GvT+9HmJVvop2kg==",
+  "success": true,
+  "projectFilePath": "/home/rob/repos/cloudygram-api-server/example/test/test.csproj",
+  "expectedPackageFiles": [
+    "/home/rob/.nuget/packages/microsoft.aspnetcore.app.ref/5.0.0/microsoft.aspnetcore.app.ref.5.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}
