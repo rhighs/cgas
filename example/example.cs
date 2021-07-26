@@ -29,7 +29,7 @@ namespace example
 
         static string DownloadFile(string messageJson)
         {
-            string message = $"{{ \"message\"': {messageJson} }}";
+            string message = $"{{ \"message\": {messageJson} }}";
             HttpContent jsonString = new StringContent(message, Encoding.UTF8, "application/json");
             using (var client = new HttpClient())
             {
