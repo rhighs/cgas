@@ -171,3 +171,16 @@ class TtWrap:
         result = await client.get_messages(InputUserSelf(), None)
         await client.disconnect()
         return result
+
+"""
+    Amongst all the private messages, find the one with the mathing message id
+    then gather the file_reference and return it to the caller.
+    This operation might require some time since its requiring all user messages,
+    fairly enough this procedure is not called much frequently.
+
+    Returns: bytes
+"""
+async def file_refresh(client_instance: TelegramClient, message_id) -> bytes:
+    messages = client_instance.get_messages(InputUserSelf(), None)
+    result = [m for m in messages if m.id == message_id]
+    return result.media.document.file_reference
