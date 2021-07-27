@@ -1,10 +1,11 @@
 from telethon                       import TelegramClient
 from io                             import BytesIO
-from .parser                        import parse_updates
+from .parser                        import parse_updates, get_message_id, with_new_ref
 from cloudygram_api_server.models   import TtModels
 from telethon.tl.types.auth         import SentCode
 from telethon.tl                    import functions, types
-from telethon.tl.types              import MessageMediaDocument, DocumentAttributeFilename, User, InputPeerChat, InputUserSelf, UpdateShortMessage
+from telethon.tl.types              import Message, MessageMediaDocument, DocumentAttributeFilename, UpdateShortMessage
+from telethon.tl.types              import User, InputPeerChat, InputUserSelf
 import pyramid.httpexceptions       as exc
 import os
 
@@ -124,6 +125,7 @@ class TtWrap:
     async def download_file(self, phone_number, message_json, path):
         client = self.create_client(phone_number)
         media: MessageMediaDocument = parse_updates(message_json)
+        message_id = get_message_id(message_json)
         await client.connect()
         if not await client.is_user_authorized():
             await client.disconnect()
@@ -138,11 +140,12 @@ class TtWrap:
         except Exception as e:
             #The main cause of this exception is an invalid file reference, find the new one and retry.
             print(str(e))#temporary log error
-            ref = await file_refresh(client, media.document.id)
+            ref = await file_refresh(client, message_id)
             media.document.file_reference = ref
             await try_download()
+            return { "hasRefChanged": True, "message" : with_new_ref(message_json, ref) }
         await client.disconnect() 
-        return media.to_json()
+        return { "messageId": get_message_id(message_json), "hasRefChanged": False, "message": media.to_json() }
 
     async def download_profile_photo(self, phone_number):
         client = self.create_client(phone_number)
@@ -184,15 +187,11 @@ class TtWrap:
 """
     Amongst all the private messages, find the one with the mathing document id
     then gather the file_reference and return it to the caller.
-    This operation might require some time since its fetching for all user messages,
+    This operation might require some time since its fetching all user messages,
     fairly enough this procedure is not called much frequently.
 
     Returns: bytes, None in case of no result found
 """
-async def file_refresh(client_instance: TelegramClient, document_id) -> bytes:
-    messages = await client_instance.get_messages(InputUserSelf(), None)
-    result = [m for m in messages if type(m.media) is MessageMediaDocument]
-    for m in result:
-        if m.document.id == document_id:
-            return m.document.file_reference
-    return None
+async def file_refresh(client_instance: TelegramClient, message_id: int) -> bytes:
+    message: Message = await client_instance.iter_messages(InputUserSelf(), ids=message_id)
+    return message.media.document.file_reference
