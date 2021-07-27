@@ -6,6 +6,7 @@ from telethon.tl.types              import MessageMediaDocument
 from cloudygram_api_server.scripts  import jres
 import asyncio, concurrent.futures
 import cloudygram_api_server
+import json
 
 class UserController:
     __autoexpose__ = None
@@ -50,12 +51,12 @@ class UserController:
     @action(name="downloadFile", renderer="json", request_method="POST")
     def download_file(self):
         phone_number = self.request.matchdict["phoneNumber"][1:]
-        message_json = self.request.json_body["message"]
+        message_json = json.loads(self.request.json_body["message"])
         path = None
         if "path" in self.request.json_body:
             path = self.request.json_body["path"]
         try:
-            result: MessageMediaDocument = self.pool.submit(
+            result = self.pool.submit(
                 asyncio.run,
                 cloudygram_api_server.get_tt().download_file(phone_number, message_json, path)
             ).result()
