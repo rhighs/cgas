@@ -45,6 +45,8 @@ def str_parse_updates(update_json):
     )
 
 def parse_updates(update_json):
+    if type(update_json) is str:
+        return str_parse_updates(update_json)
     media_dict = update_json["updates"][1]["message"]["media"]
     return MessageMediaDocument(
         document=document_from_dict(media_dict["document"]),
