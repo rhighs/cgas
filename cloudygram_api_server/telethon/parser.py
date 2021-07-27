@@ -1,5 +1,5 @@
 import json
-from telethon.tl.types import MessageMediaDocument, Document, UpdateNewMessage, UpdateMessageID, Updates, PeerUser, UpdateReadHeader
+from telethon.tl.types import MessageMediaDocument, Document, UpdateNewMessage, UpdateMessageID, Updates, PeerUser, UpdateReadHistoryInbox, Message
 
 def remove_buggy_chars(json_string):
     if json_string[1:] == "\"":
@@ -104,7 +104,7 @@ def __parse_updates(update_json) -> Updates:
             post_author =   message_json["post_author"],
             grouped_id =    message_json["grouped_id"],
             restriction_reason = message_json["restriction_reason"],
-            ttl_perios =    message_json["ttl_perdiod"]
+            ttl_period =    message_json["ttl_perdiod"]
             )
 
     up_new_msg = UpdateNewMessage(
@@ -129,5 +129,6 @@ def __parse_updates(update_json) -> Updates:
             None,
             None,
             None,
+            None
             )
 
