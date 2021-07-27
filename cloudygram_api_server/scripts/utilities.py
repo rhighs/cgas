@@ -3,10 +3,11 @@ from telethon.tl.types  import Message
 import                  json
 
 def jres(model, status):
-    return Response(json.dumps(model),
+    return Response(json.dumps(model).replace("\\", ""),
                     charset="UTF-8",
                     content_type="application/json",
                     status=status)
+
 
 class CGMessage:
     def __init__(self, id, from_peer: str, str_content: str):

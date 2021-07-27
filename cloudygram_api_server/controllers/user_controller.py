@@ -39,7 +39,7 @@ class UserController:
         try:
             result = self.pool.submit(
                 asyncio.run,
-                wrap.upload_file(phone_number=phone_number, file_name=file_name, file_stream=file_stream, mime_type=mime_type)
+                wrap.upload_file(phone_number, file_name, file_stream, mime_type)
             ).result()
         except HTTPUnauthorized as u:
             return jres(UserModels.unauthorized(), u.status_code)
@@ -57,7 +57,7 @@ class UserController:
         try:
             result: MessageMediaDocument = self.pool.submit(
                 asyncio.run,
-                cloudygram_api_server.get_tt().download_file(phone_number=phone_number, message_json=message_json, path=path)
+                cloudygram_api_server.get_tt().download_file(phone_number, message_json, path)
             ).result()
         except HTTPUnauthorized as u:
             return jres(UserModels.unauthorized(), u.status_code)
