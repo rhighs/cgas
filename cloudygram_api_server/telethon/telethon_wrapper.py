@@ -12,7 +12,7 @@ class TtWrap:
     def __init__(self, api_id, api_hash):
         self.api_id = api_id
         self.api_hash = api_hash
-        self.test_msg = None
+        self.initial_ref = b'a\x7ffile\xfareference'
 
     def create_client(self, phone_number):
         workdir = os.path.join(os.getcwd(), "sessions", phone_number)
@@ -101,7 +101,7 @@ class TtWrap:
             stickers=[types.InputDocument(
                 id=uploaded_file.id,
                 access_hash=uploaded_file.id,
-                file_reference=b'a\x7ffile\xfareference'
+                file_reference=self.initial_ref
             )],
             ttl_seconds=100,
             mime_type=mime_type,
@@ -137,7 +137,7 @@ class TtWrap:
             await try_download()
         except Exception as e:
             #The main cause of this exception is an invalid file reference, find the new one and retry.
-            print("Download file exception:", str(e))#temporary log error
+            print(str(e))#temporary log error
             ref = await file_refresh(client, media.document.id)
             media.document.file_reference = ref
             await try_download()
