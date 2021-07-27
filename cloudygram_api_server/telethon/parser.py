@@ -35,7 +35,8 @@ def parse_message_media(message_json):
         ttl_seconds=message_dict["ttl_seconds"]
     )
 
-def parse_updates(update_json):
+
+def str_parse_updates(update_json):
     update_dict = remove_buggy_chars(update_json)
     media_dict = update_dict["updates"][1]["message"]["media"]
     return MessageMediaDocument(
@@ -43,3 +44,9 @@ def parse_updates(update_json):
         ttl_seconds=media_dict["ttl_seconds"]
     )
 
+def parse_updates(update_json):
+    media_dict = update_json["updates"][1]["message"]["media"]
+    return MessageMediaDocument(
+        document=document_from_dict(media_dict["document"]),
+        ttl_seconds=media_dict["ttl_seconds"]
+    )
