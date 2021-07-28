@@ -51,7 +51,9 @@ class UserController:
     @action(name="downloadFile", renderer="json", request_method="POST")
     def download_file(self):
         phone_number = self.request.matchdict["phoneNumber"][1:]
-        message_json = json.loads(self.request.json_body["message"])
+        message_json = self.request.json_body["message"]
+        if type(message_json) is str:
+            message_json = json.loads(message_json)
         path = None
         if "path" in self.request.json_body:
             path = self.request.json_body["path"]
