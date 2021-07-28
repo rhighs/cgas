@@ -136,15 +136,12 @@ class TtWrap:
             else:
                 await client.download_media(media)
         try:
-            print(await file_refresh(client, message_id))
             await try_download()
-        except Exception as e:
-            #The main cause of this exception is an invalid file reference, find the new one and retry.
-            #Temporary log error.
-            print(str(e))
+        except Exception as e: #file ref
             ref = await file_refresh(client, message_id)
             media.document.file_reference = ref
             await try_download()
+            await client.disconnect() 
             return { "hasRefChanged": True, "message" : with_new_ref(message_json, ref) }
         await client.disconnect() 
         return { "messageId": get_message_id(message_json), "hasRefChanged": False, "message": media.to_json() }
