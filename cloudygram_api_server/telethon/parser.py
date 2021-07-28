@@ -46,8 +46,7 @@ def str_parse_updates(update_json):
 def parse_updates(update_json):
     if type(update_json) is str:
         return str_parse_updates(update_json)
-    update_dict = remove_buggy_chars(update_json)
-    media_dict = update_dict["updates"][1]["message"]["media"]
+    media_dict = update_json["updates"][1]["message"]["media"]
     return MessageMediaDocument(
             document=document_from_dict(media_dict["document"]),
             ttl_seconds=media_dict["ttl_seconds"]
