@@ -56,7 +56,7 @@ def get_message_id(message_json):
     return message_json["updates"][0]["id"]
 
 def with_new_ref(message_json, ref):
-    message_json["updates"][1]["message"]["media"]["document"]["file_reference"] = ref(str)
+    message_json["updates"][1]["message"]["media"]["document"]["file_reference"] = str(ref)
     return message_json
 
 #test
