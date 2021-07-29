@@ -1,7 +1,8 @@
 import json
+from base64 import encodebytes, decodebytes
 from telethon.tl.types import MessageMediaDocument, Document, UpdateNewMessage, UpdateMessageID, Updates, PeerUser, UpdateReadHistoryInbox, Message
 
-def remove_buggy_chars(json_string):
+def remove_buggy_chars(json_string: str) -> dict:
     if json_string[1:] == "\"":
         json_string = json_string[1:]
     if json_string [:-1] == "\"":
@@ -9,13 +10,16 @@ def remove_buggy_chars(json_string):
     json_string = json_string.replace("\\", "")
     return json.loads(json_string)
 
-def document_from_dict(document_dict):
+def document_from_dict(document_dict: dict) -> Document:
+    print("encoded: ", document_dict["file_reference"].encode(encoding="UTF-8"))
+    print("normal: ", document_dict["file_reference"])
     if(document_dict["_"] != "Document"):
         raise Exception("Invalid document type, must provide Document")
+    decoded_ref = decodebytes(document_dict["file_reference"].encode())
     return Document(
             id=             document_dict["id"],
             access_hash=    document_dict["access_hash"],
-            file_reference= document_dict["file_reference"],
+            file_reference= decoded_ref,
             date=           document_dict["date"],
             mime_type=      document_dict["mime_type"],
             size=           document_dict["size"],
@@ -25,39 +29,39 @@ def document_from_dict(document_dict):
             video_thumbs=   document_dict["video_thumbs"]
             )
 
-def parse_message_media(message_json):
+def parse_message_media(message_json: str) -> MessageMediaDocument:
     message_dict = remove_buggy_chars(message_json)
     if(message_dict["_"] != "MessageMediaDocument"):
         raise Exception("Invalid message type, must provide Document")
     document_dict = message_dict["document"]
     return MessageMediaDocument(
-            document=document_from_dict(document_dict),
-            ttl_seconds=message_dict["ttl_seconds"]
+            document=       document_from_dict(document_dict),
+            ttl_seconds=    message_dict["ttl_seconds"]
             )
 
-def str_parse_updates(update_json):
+def str_parse_updates(update_json: str) -> MessageMediaDocument:
     update_dict = remove_buggy_chars(update_json)
     media_dict = update_dict["updates"][1]["message"]["media"]
     return MessageMediaDocument(
-            document=document_from_dict(media_dict["document"]),
-            ttl_seconds=media_dict["ttl_seconds"]
+            document=       document_from_dict(media_dict["document"]),
+            ttl_seconds=    media_dict["ttl_seconds"]
             )
 
-def parse_updates(update_json):
+def parse_updates(update_json) -> MessageMediaDocument:
     if type(update_json) is str:
         return str_parse_updates(update_json)
     media_dict = update_json["updates"][1]["message"]["media"]
     return MessageMediaDocument(
-            document=document_from_dict(media_dict["document"]),
-            ttl_seconds=media_dict["ttl_seconds"]
+            document=       document_from_dict(media_dict["document"]),
+            ttl_seconds=    media_dict["ttl_seconds"]
             )
 
-def get_message_id(message_json):
-    return message_json["updates"][0]["id"]
+def get_message_id(message_dict: dict) -> int:
+    return message_dict["updates"][0]["id"]
 
-def with_new_ref(message_json, ref):
-    message_json["updates"][1]["message"]["media"]["document"]["file_reference"] = str(ref)
-    return message_json
+def with_new_ref(message_dict: dict, ref: bytes) -> dict:
+    message_dict["updates"][1]["message"]["media"]["document"]["file_reference"] = encodebytes(ref).decode()
+    return message_dict
 
 #test
 def __parse_updates(update_json) -> Updates:
