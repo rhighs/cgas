@@ -13,7 +13,7 @@ class TtWrap:
     def __init__(self, api_id, api_hash):
         self.api_id = api_id
         self.api_hash = api_hash
-        self.initial_ref = b'a\x7ffile\xfareference'
+        self.initial_ref = b'initialfilereference'
 
     def create_client(self, phone_number):
         workdir = os.path.join(os.getcwd(), "sessions", phone_number)
