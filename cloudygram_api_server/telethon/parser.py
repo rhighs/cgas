@@ -11,8 +11,6 @@ def remove_buggy_chars(json_string: str) -> dict:
     return json.loads(json_string)
 
 def document_from_dict(document_dict: dict) -> Document:
-    print("encoded: ", document_dict["file_reference"].encode(encoding="UTF-8"))
-    print("normal: ", document_dict["file_reference"])
     if(document_dict["_"] != "Document"):
         raise Exception("Invalid document type, must provide Document")
     decoded_ref = decodebytes(document_dict["file_reference"].encode())
