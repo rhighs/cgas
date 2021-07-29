@@ -144,7 +144,7 @@ class TtWrap:
             await client.disconnect() 
             return { "hasRefChanged": True, "message" : with_new_ref(message_json, ref) }
         await client.disconnect() 
-        return { "messageId": get_message_id(message_json), "hasRefChanged": False, "message": media.to_json() }
+        return { "messageId": get_message_id(message_json), "hasRefChanged": False, "message": message_json }
 
     async def download_profile_photo(self, phone_number):
         client = self.create_client(phone_number)
