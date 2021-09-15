@@ -146,13 +146,13 @@ class TtWrap:
         await client.disconnect() 
         return { "messageId": get_message_id(message_json), "hasRefChanged": False, "message": media.to_json() }
 
-    async def download_profile_photo(self, phone_number):
+    async def download_profile_photo(self, phone_number, file_path=None):
         client = self.create_client(phone_number)
         await client.connect()
         if not await client.is_user_authorized():
             client.disconnect()
             raise exc.HTTPUnauthorized()
-        path = await client.download_profile_photo("me")
+        path = await client.download_profile_photo("me", file=file_path)
         await client.disconnect()
         return path
 
