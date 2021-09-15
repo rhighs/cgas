@@ -2,12 +2,13 @@ from pyramid.response   import Response
 from telethon.tl.types  import Message
 import                  json
 
-def jres(model, status):
-    return Response(json.dumps(model).replace("\\", ""),
+def jres(model: dict, status: int) -> Response:
+    jstr = json.dumps(model).replace("\\", "")
+    jstr = jstr.replace("\"{", "{").replace("}\"", "}")
+    return Response(jstr,
                     charset="UTF-8",
                     content_type="application/json",
                     status=status)
-
 
 class CGMessage:
     def __init__(self, id, from_peer: str, str_content: str):
