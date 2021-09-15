@@ -1,9 +1,10 @@
-from pyramid_handlers               import action
-from pyramid.request                import Request
-from pyramid.httpexceptions         import HTTPUnauthorized
-from cloudygram_api_server.models   import UserModels
-from telethon.tl.types              import MessageMediaDocument
-from cloudygram_api_server.scripts  import jres
+from pyramid_handlers                   import action
+from pyramid.request                    import Request
+from pyramid.httpexceptions             import HTTPUnauthorized
+from cloudygram_api_server.models       import UserModels
+from telethon.tl.types                  import MessageMediaDocument
+from cloudygram_api_server.scripts      import jres
+from cloudygram_api_server.payload_keys import tg_data, dl, file
 import asyncio, concurrent.futures
 import cloudygram_api_server
 import json
@@ -17,7 +18,7 @@ class UserController:
 
     @action(name="userInfo", renderer="json", request_method="GET")
     def user_info(self):
-        phone_number = self.request.matchdict["phoneNumber"][1:] #remove + at the beginning
+        phone_number = self.request.matchdict[tg_data.phone][1:] #remove + at the beginning
         wrap = cloudygram_api_server.get_tt()
         try:
             user = self.pool.submit(
@@ -32,10 +33,10 @@ class UserController:
 
     @action(name="uploadFile", renderer="json", request_method="POST")
     def upload_file(self):
-        phone_number = self.request.matchdict["phoneNumber"][1:]
-        file_stream = self.request.POST["file"].file
-        file_name = self.request.POST["file"].filename
-        mime_type = self.request.POST["mimeType"]
+        phone_number = self.request.matchdict[tg_data.phone][1:]
+        file_stream = self.request.POST[file.name].file
+        file_name = self.request.POST[file.name].filename
+        mime_type = self.request.POST[file.mime]
         wrap = cloudygram_api_server.get_tt()
         try:
             result = self.pool.submit(
@@ -50,13 +51,13 @@ class UserController:
     
     @action(name="downloadFile", renderer="json", request_method="POST")
     def download_file(self):
-        phone_number = self.request.matchdict["phoneNumber"][1:]
-        message_json = self.request.json_body["message"]
+        phone_number = self.request.matchdict[tg_data.phone][1:]
+        message_json = self.request.json_body[dl.ref_message]
         if type(message_json) is str:
             message_json = json.loads(message_json)
         path = None
-        if "path" in self.request.json_body:
-            path = self.request.json_body["path"]
+        if file.path in self.request.json_body:
+            path = self.request.json_body[file.path]
         try:
             result = self.pool.submit(
                 asyncio.run,
@@ -70,7 +71,7 @@ class UserController:
 
     @action(name="isAuthorized", renderer="json", request_method="GET")
     def is_authorized(self):
-        phone_number = self.request.matchdict["phoneNumber"][1:]
+        phone_number = self.request.matchdict[tg_data.phone][1:]
         wrap = cloudygram_api_server.get_tt()
         result = self.pool.submit(
             asyncio.run,
@@ -85,26 +86,30 @@ class UserController:
 
     @action(name="downloadProfilePhoto", renderer="json", request_method="GET")
     def download_profile_photo(self):
-        phone_number = self.request.matchdict["phoneNumber"][1:]
+        requestDict: dict = self.request.matchdict
+        phone_number = requestDict[tg_data.phone][1:]
+        path = None
+        if file.path in requestDict:
+            path = requestDict[file.path]
         wrap = cloudygram_api_server.get_tt()
         try:
             result = self.pool.submit(
                 asyncio.run,
-                wrap.download_profile_picture(phone_number)
+                wrap.download_profile_picture(phone_number, path)
             ).result()
         except HTTPUnauthorized as u:
             return jres(UserModels.unauthorized(), u.status_code)
         except Exception as e:
             return jres(UserModels.failure(str(e)), 500)
         response = UserModels.success(
-            message="profile photo downloaded!",
-            data=result #path where thw picture got downloaded
+            message="Profile photo downloaded.",
+            data=result #path where the picture got downloaded
         )
         return jres(response, 200)
 
     @action(name="logout", renderer="json", request_method="DELETE")
     def logout(self):
-        phone_number = self.request.matchdict["phoneNumber"][1:]
+        phone_number = self.request.matchdict[tg_data.phone][1:]
         wrap  = cloudygram_api_server.get_tt()
         try:
             result = self.pool.submit(
@@ -118,7 +123,7 @@ class UserController:
         if not result:
             return jres(UserModels.failure(message="Clouldn't log out"), 200)
         response = UserModels.success(
-            message="log out successful!",
+            message="Log out successful.",
             data=result
         )
         return jres(response, 200)
