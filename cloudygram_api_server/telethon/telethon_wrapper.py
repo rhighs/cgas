@@ -183,14 +183,19 @@ class TtWrap:
         await client.disconnect()
         return result
 
-"""
-    Amongst all the private messages, find the one with the mathing document id
-    then gather the file_reference and return it to the caller.
-    This operation might require some time since its fetching all user messages,
-    fairly enough this procedure is not called much frequently.
+    async def get_contacts(self, phone_number):
+        client = self.create_client(phone_number)
+        await client.connect()
+        if not await client.is_user_authorized() or (await client.get_me()).bot:
+            await client.disconnect()
+            raise exc.HTTPUnauthorized()
+        result = await client(functions.contacts.GetContactsRequest(
+            hash=0
+            ))
+        await client.disconnect()
+        return result.stringify()
 
-    Returns: bytes, None in case of no result found
-"""
 async def file_refresh(client_instance: TelegramClient, message_id: int) -> bytes:
     async for m in client_instance.iter_messages(InputUserSelf(), ids=message_id):
         return m.media.document.file_reference
+
