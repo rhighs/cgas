@@ -8,15 +8,17 @@ from telethon.tl.types              import Message, MessageMediaDocument, Docume
 from telethon.tl.types              import User, InputPeerChat, InputUserSelf
 import pyramid.httpexceptions       as exc
 import os
+from pathlib import Path
 
 class TtWrap:
     def __init__(self, api_id, api_hash):
         self.api_id = api_id
         self.api_hash = api_hash
         self.initial_ref = b'initialfilereference'
+        self.workdir = os.path.join(os.getcwd(), "sessions")
 
     def create_client(self, phone_number):
-        workdir = os.path.join(os.getcwd(), "sessions", phone_number)
+        workdir = self.workdir + phone_number
         return TelegramClient(api_id=self.api_id, api_hash=self.api_hash, session=workdir)
     
     async def is_authorized(self, phone_number):
@@ -25,6 +27,21 @@ class TtWrap:
         result = await client.is_user_authorized()
         await client.disconnect()
         return result
+
+    async def clean(self):
+        sessions = os.listdir(self.workdir)
+        files = [file for file in sessions if os.path.isfile(os.path.join(self.workdir, file))]
+        for file in files:
+            session_name = Path(file).stem
+            if self.session_valid(session_name):
+                os.remove(self.workdir + file)
+
+    async def session_valid(self, phone_number) -> bool:
+        client = self.create_client(phone_number)
+        await client.connect()
+        result = await client.get_me()
+        await client.disconnect()
+        return not (result is None)
 
     async def send_private_message(self, phone_number, message):
         client = self.create_client(phone_number) 
