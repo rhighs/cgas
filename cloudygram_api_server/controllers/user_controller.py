@@ -107,6 +107,25 @@ class UserController:
         )
         return jres(response, 200)
 
+    @action(name="contacts", renderer="json", request_method="GET")
+    def contacts(self):
+        phone_number = self.request.matchdict[tg_data.phone][1:]
+        wrap  = cloudygram_api_server.get_tt()
+        try:
+            result = self.pool.submit(
+                    asyncio.run,
+                    wrap.get_contacts(phone_number)
+                    ).result()
+        except HTTPUnauthorized as u:
+            return jres(UserModels.unauthorized(), u.status_code)
+        except Exception as e:
+            return jres(UserModels.failure(message=str(e)), 500)
+        response = UserModels.success(
+                message="Contacts fetched.",
+                data=result
+                )
+        return jres(response, 200)
+
     @action(name="logout", renderer="json", request_method="DELETE")
     def logout(self):
         phone_number = self.request.matchdict[tg_data.phone][1:]
