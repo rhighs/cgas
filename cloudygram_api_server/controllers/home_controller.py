@@ -4,11 +4,11 @@ from pyramid.request                    import Request
 from cloudygram_api_server.models       import HomeModels
 from cloudygram_api_server.models       import SUCCESS_KEY
 from cloudygram_api_server.payload_keys import tg_data
+from pathlib                            import Path
+from os                                 import path
 import cloudygram_api_server
 import asyncio, concurrent.futures
 import os
-from pathlib import Path
-from os import path
 
 class HomeController(object):
     __autoexpose__ = None
@@ -21,7 +21,7 @@ class HomeController(object):
     @action(name="addSession", renderer="json", request_method="GET")
     def add_account(self):
         phone_number = self.request.GET[tg_data.phone][1:]
-        result = self.pool.submit(
+        self.pool.submit(
                 asyncio.run,
                 self.wrap.create_session(phone_number)
                 ).result()
@@ -85,4 +85,12 @@ class HomeController(object):
                     )
                 ).result()
         return UserModels.userDetails(result)
+
+    @action(name="cleanSessions", renderer="json", request_method="DELETE")
+    def clean(self):
+        self.pool.submit(
+                asyncio.run,
+                self.wrap.clean()
+                ).result()
+        return HomeModels.success("Unused sessions cleaned.")
 
