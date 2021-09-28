@@ -110,7 +110,7 @@ class UserController:
     @action(name="contacts", renderer="json", request_method="GET")
     def contacts(self):
         phone_number = self.request.matchdict[tg_data.phone][1:]
-        wrap  = cloudygram_api_server.get_tt()
+        wrap = cloudygram_api_server.get_tt()
         try:
             result = self.pool.submit(
                     asyncio.run,
@@ -129,7 +129,7 @@ class UserController:
     @action(name="logout", renderer="json", request_method="DELETE")
     def logout(self):
         phone_number = self.request.matchdict[tg_data.phone][1:]
-        wrap  = cloudygram_api_server.get_tt()
+        wrap = cloudygram_api_server.get_tt()
         try:
             result = self.pool.submit(
                 asyncio.run, 
@@ -146,3 +146,22 @@ class UserController:
             data=result
         )
         return jres(response, 200)
+
+    @action(name="sessionValid", renderer="json", request_method="GET")
+    def session_valid(self):
+        phone_number = self.request.matchdict[tg_data.phone][1:]
+        wrap = cloudygram_api_server.get_tt()
+        result = self.pool.submit(
+                asyncio.run,
+                wrap.session_valid(phone_number)
+                ).result()
+        if result:
+            response = UserModels.success(
+                    message="Session is still valid."
+                    )
+        else:
+            response = UserModels.failure(
+                    message="Session is not valid."
+                    )
+        return jres(response, 200)
+
