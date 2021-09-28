@@ -97,6 +97,18 @@ When successfully called this method, you will then receive a response like so:
 }
 ```
 
+## Session management
+Whichever usecase you will face, it might happen that your sessions are no longer valid, this can
+happen after a manual deletion of the cloudygram device via the telegram app, to avoid getting
+yourself into annoying errors, I've provided two api calls in which you can check the
+state of a session, and eventually clean all the non-valid sessions handled by the server.
+To do this you can use the following resources.
+
+`GET /user/<international_formatted_number>/sessionValid` "is this specific session valid?".\
+`DELETE /cleanSessions` deletes all non-valid sessions.
+
+These resources always return a json object with a bool field `isSuccess`.
+
 ## Contributing
 This project does NOT aim at becoming a 1:1 Telethon API but rather aims at the essentials only, if you have any suggestion
 pull requests are welcome.
