@@ -52,7 +52,7 @@ class UserController:
     @action(name="downloadFile", renderer="json", request_method="POST")
     def download_file(self):
         phone_number = self.request.matchdict[tg_data.phone][1:]
-        message_json = self.request.json_body[dl.ref_message]
+        message_json = self.request.json_body[dl.message]
         if type(message_json) is str:
             message_json = json.loads(message_json)
         path = None
