@@ -44,6 +44,14 @@ class TtWrap:
         await client.disconnect()
         return not (result is None)
 
+    async def is_authorized(self, phone_number):
+        client = self.create_client(phone_number)
+        await client.connect()
+        me = await client.get_me()
+        authorized = await client.is_user_authorized()
+        await client.disconnect()
+        return authorized and (me is not None)
+
     async def send_private_message(self, phone_number, message):
         client = await self.connect(phone_number) 
         await client.send_message("me", message)
@@ -88,6 +96,19 @@ class TtWrap:
         except Exception as e:
             await client.disconnect()
             return TtModels.sing_in_failure(str(e))
+        await client.disconnect()
+        return result
+
+    async def qr_login(self, phone_number):
+        client = self.create_client(phone_number)
+        await client.connect()
+        result = await client.qr_login()
+        await client.disconnect()
+        return result
+
+    async def logout(self, phone_number):
+        client = await self.connect(phone_number)
+        result = await client.log_out()
         await client.disconnect()
         return result
 
@@ -151,19 +172,6 @@ class TtWrap:
         path = await client.download_profile_photo("me", file=file_path)
         await client.disconnect()
         return path
-
-    async def qr_login(self, phone_number):
-        client = self.create_client(phone_number)
-        await client.connect()
-        result = await client.qr_login()
-        await client.disconnect()
-        return result
-
-    async def logout(self, phone_number):
-        client = await self.connect(phone_number)
-        result = await client.log_out()
-        await client.disconnect()
-        return result
 
     async def get_messages(self, phone_number):
         client = await self.connect(phone_number)
