@@ -17,17 +17,18 @@ class TtWrap:
         self.initial_ref = b'initialfilereference'
         self.workdir = os.path.join(os.getcwd(), "sessions")
 
-    def create_client(self, phone_number):
-        workdir = self.workdir + phone_number
-        return TelegramClient(api_id=self.api_id, api_hash=self.api_hash, session=workdir)
-    
-    async def is_authorized(self, phone_number):
+    async def connect(self, phone_number):
         client = self.create_client(phone_number)
         await client.connect()
-        result = await client.is_user_authorized()
-        await client.disconnect()
-        return result
+        if (await client.is_user_authorized()):
+            return client
+        else:
+            raise exc.HTTPUnauthorized
 
+    def create_client(self, phone_number):
+        workdir = self.workdir + "/" + phone_number
+        return TelegramClient(api_id=self.api_id, api_hash=self.api_hash, session=workdir)
+    
     async def clean(self):
         sessions = os.listdir(self.workdir)
         files = [file for file in sessions if os.path.isfile(os.path.join(self.workdir, file))]
@@ -44,17 +45,12 @@ class TtWrap:
         return not (result is None)
 
     async def send_private_message(self, phone_number, message):
-        client = self.create_client(phone_number) 
-        await client.connect()
-        if not await client.is_user_authorized():
-            await client.disconnect()
-            raise exc.HTTPUnauthorized()
+        client = await self.connect(phone_number) 
         await client.send_message("me", message)
         await client.disconnect()
 
     async def create_session(self, phone_number):
         client = self.create_client(phone_number)
-        await client.connect()
         await client.disconnect()
 
     async def send_code(self, phone_number):
@@ -81,7 +77,6 @@ class TtWrap:
 
     async def signup(self, phone_number, code, phone_code_hash, first_name, last_name, phone=None):
         client = self.create_client(phone_number)
-        await client.connect()
         try:
             result: User = await client.sign_up(
                     code=code,
@@ -97,21 +92,13 @@ class TtWrap:
         return result
 
     async def get_me(self, phone_number):
-        client = self.create_client(phone_number)
-        await client.connect()
-        if not await client.is_user_authorized():
-            await client.disconnect()
-            raise exc.HTTPUnauthorized()
+        client = await self.connect(phone_number)
         result = await client.get_me()
         await client.disconnect()
         return result
 
     async def upload_file(self, phone_number, file_name, file_stream: BytesIO, mime_type):
-        client = self.create_client(phone_number)
-        await client.connect()
-        if not await client.is_user_authorized():
-            client.disconnect()
-            raise exc.HTTPUnauthorized()
+        client = await self.connect(phone_number)
         uploaded_file = await client.upload_file(file=file_stream)
         me = await client.get_me()
         media = types.InputMediaUploadedDocument(
@@ -140,13 +127,9 @@ class TtWrap:
         return updates.to_json()
 
     async def download_file(self, phone_number, message_json, path):
-        client = self.create_client(phone_number)
+        client = await self.connect(phone_number)
         media: MessageMediaDocument = parse_updates(message_json)
         message_id = get_message_id(message_json)
-        await client.connect()
-        if not await client.is_user_authorized():
-            await client.disconnect()
-            raise exc.HTTPUnauthorized()
         async def try_download():
             if path is not None:
                 await client.download_media(media, path)
@@ -154,7 +137,7 @@ class TtWrap:
                 await client.download_media(media)
         try:
             await try_download()
-        except Exception as e: #file ref
+        except: #file ref
             ref = await file_refresh(client, message_id)
             media.document.file_reference = ref
             await try_download()
@@ -164,11 +147,7 @@ class TtWrap:
         return { "messageId": get_message_id(message_json), "hasRefChanged": False, "message": message_json }
 
     async def download_profile_photo(self, phone_number, file_path=None):
-        client = self.create_client(phone_number)
-        await client.connect()
-        if not await client.is_user_authorized():
-            client.disconnect()
-            raise exc.HTTPUnauthorized()
+        client = await self.connect(phone_number)
         path = await client.download_profile_photo("me", file=file_path)
         await client.disconnect()
         return path
@@ -181,34 +160,25 @@ class TtWrap:
         return result
 
     async def logout(self, phone_number):
-        client = self.create_client(phone_number)
-        if not await client.is_user_authorized():
-            await client.disconnect()
-            raise exc.HTTPUnauthorized()
-        await client.connect()
+        client = await self.connect(phone_number)
         result = await client.log_out()
         await client.disconnect()
         return result
 
     async def get_messages(self, phone_number):
-        client = self.create_client(phone_number)
-        await client.connect()
-        if not await client.is_user_authorized():
-            await client.disconnect()
-            raise exc.HTTPUnauthorized()
+        client = await self.connect(phone_number)
         result = await client.get_messages(InputUserSelf(), None)
         await client.disconnect()
         return result
 
     async def get_contacts(self, phone_number):
-        client = self.create_client(phone_number)
-        await client.connect()
-        if not await client.is_user_authorized() or (await client.get_me()).bot:
+        client = await self.connect(phone_number)
+        if (await client.get_me()).bot:
             await client.disconnect()
             raise exc.HTTPUnauthorized()
         result = await client(functions.contacts.GetContactsRequest(
             hash=0
-            ))
+        ))
         await client.disconnect()
         return result.stringify()
 
