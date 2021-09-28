@@ -35,7 +35,7 @@ class TtWrap:
         for file in files:
             session_name = Path(file).stem
             if self.session_valid(session_name):
-                os.remove(self.workdir + file)
+                os.remove(self.workdir + "/" + file)
 
     async def session_valid(self, phone_number) -> bool:
         client = self.create_client(phone_number)
