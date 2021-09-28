@@ -9,3 +9,8 @@ all: $(app)
 
 $(app):
 	$(compiler) $(opt) $(flags) $(sources) $(libs) -o $(app)
+
+.PHONY: clean
+
+clean:
+	rm -rf $(app)
