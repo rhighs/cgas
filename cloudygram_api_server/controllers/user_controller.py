@@ -95,16 +95,22 @@ class UserController:
         try:
             result = self.pool.submit(
                 asyncio.run,
-                wrap.download_profile_picture(phone_number, path)
+                wrap.download_profile_photo(phone_number, path)
             ).result()
         except HTTPUnauthorized as u:
             return jres(UserModels.unauthorized(), u.status_code)
         except Exception as e:
             return jres(UserModels.failure(str(e)), 500)
-        response = UserModels.success(
-            message="Profile photo downloaded.",
-            data=result #path where the picture got downloaded
-        )
+
+        if result is None:
+            response = UserModels.failure(
+                    message="User has no profile photo."
+                    )
+        else:
+            response = UserModels.success(
+                    message="Profile photo downloaded.",
+                    data=result #path where the picture got downloaded
+                    )
         return jres(response, 200)
 
     @action(name="contacts", renderer="json", request_method="GET")
