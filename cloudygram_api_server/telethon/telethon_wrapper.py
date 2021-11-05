@@ -2,13 +2,15 @@ from telethon                       import TelegramClient
 from io                             import BytesIO
 from .parser                        import parse_updates, get_message_id, with_new_ref
 from cloudygram_api_server.models   import TtModels
-from telethon.tl.types.auth         import SentCode
 from telethon.tl                    import functions, types
 from telethon.tl.types              import Message, MessageMediaDocument, DocumentAttributeFilename, UpdateShortMessage
 from telethon.tl.types              import User, InputPeerChat, InputUserSelf
+from telethon.tl.types.auth         import SentCode
+from telethon.tl.types.messages     import AffectedMessages
+from pathlib                        import Path
+from typing                         import List
 import pyramid.httpexceptions       as exc
 import os
-from pathlib import Path
 
 class TtWrap:
     def __init__(self, api_id, api_hash):
@@ -17,7 +19,7 @@ class TtWrap:
         self.initial_ref = b'initialfilereference'
         self.workdir = os.path.join(os.getcwd(), "sessions")
 
-    async def connect(self, phone_number):
+    async def connect(self, phone_number: str) -> TelegramClient:
         client = self.create_client(phone_number)
         await client.connect()
         if (await client.is_user_authorized()):
@@ -25,7 +27,7 @@ class TtWrap:
         else:
             raise exc.HTTPUnauthorized
 
-    def create_client(self, phone_number):
+    def create_client(self, phone_number: str) -> TelegramClient:
         workdir = self.workdir + "/" + phone_number
         return TelegramClient(api_id=self.api_id, api_hash=self.api_hash, session=workdir)
     
@@ -37,14 +39,14 @@ class TtWrap:
             if not self.session_valid(session_name):
                 os.remove(self.workdir + "/" + file)
 
-    async def session_valid(self, phone_number) -> bool:
+    async def session_valid(self, phone_number: str) -> bool:
         client = self.create_client(phone_number)
         await client.connect()
         result = await client.get_me()
         await client.disconnect()
         return not (result is None)
 
-    async def is_authorized(self, phone_number):
+    async def is_authorized(self, phone_number: str) -> bool:
         client = self.create_client(phone_number)
         await client.connect()
         me = await client.get_me()
@@ -52,7 +54,7 @@ class TtWrap:
         await client.disconnect()
         return authorized and (me is not None)
 
-    async def send_private_message(self, phone_number, message):
+    async def send_private_message(self, phone_number: str, message: Message):
         client = await self.connect(phone_number) 
         await client.send_message("me", message)
         await client.disconnect()
@@ -61,7 +63,8 @@ class TtWrap:
         client = self.create_client(phone_number)
         await client.disconnect()
 
-    async def send_code(self, phone_number):
+    #to handle better, dont like the "two" return types
+    async def send_code(self, phone_number: str):
         client = self.create_client(phone_number)
         await client.connect()
         try:
@@ -72,7 +75,7 @@ class TtWrap:
         await client.disconnect()
         return code.phone_code_hash
 
-    async def signin(self, phone_number, phone_code_hash, phone_code):
+    async def signin(self, phone_number, phone_code_hash, phone_code) -> User:
         client = self.create_client(phone_number)
         await client.connect()
         try:
@@ -83,7 +86,8 @@ class TtWrap:
         await client.disconnect()
         return result #of type User
 
-    async def signup(self, phone_number, code, phone_code_hash, first_name, last_name, phone=None):
+    async def signup(self, phone_number: str, code: str, phone_code_hash: str,
+            first_name: str, last_name: str, phone: str = None) -> User:
         client = self.create_client(phone_number)
         try:
             result: User = await client.sign_up(
@@ -99,7 +103,7 @@ class TtWrap:
         await client.disconnect()
         return result
 
-    async def qr_login(self, phone_number):
+    async def qr_login(self, phone_number: str):
         client = self.create_client(phone_number)
         await client.connect()
         result = await client.qr_login()
@@ -112,7 +116,7 @@ class TtWrap:
         await client.disconnect()
         return result
 
-    async def get_me(self, phone_number):
+    async def get_me(self, phone_number) -> User:
         client = await self.connect(phone_number)
         result = await client.get_me()
         await client.disconnect()
@@ -147,7 +151,7 @@ class TtWrap:
         await client.disconnect()
         return updates.to_json()
 
-    async def download_file(self, phone_number, message_json, path):
+    async def download_file(self, phone_number, message_json, path) -> dict:
         client = await self.connect(phone_number)
         media: MessageMediaDocument = parse_updates(message_json)
         message_id = get_message_id(message_json)
@@ -158,7 +162,7 @@ class TtWrap:
                 await client.download_media(media)
         try:
             await try_download()
-        except: #file ref
+        except: #file ref exception, dont care about getting the type
             ref = await file_refresh(client, message_id)
             media.document.file_reference = ref
             await try_download()
@@ -167,19 +171,26 @@ class TtWrap:
         await client.disconnect() 
         return { "messageId": get_message_id(message_json), "hasRefChanged": False, "message": message_json }
 
-    async def download_profile_photo(self, phone_number, file_path=None):
-        client = await self.connect(phone_number)
-        path = await client.download_profile_photo("me", file=file_path)
+    async def download_profile_photo(self, phone_number: str, file_path: str = None) -> str:
+        client = await self.connect(phone_number) 
+        path = await client.download_profile_photo(InputUserSelf(), file=file_path)
         await client.disconnect()
         return path
 
-    async def get_messages(self, phone_number):
+    async def get_messages(self, phone_number: str) -> List:
         client = await self.connect(phone_number)
         result = await client.get_messages(InputUserSelf(), None)
         await client.disconnect()
         return result
 
-    async def get_contacts(self, phone_number):
+    async def delete_messages(self, messages_id: List[str], phone_number: str, chat_id: str = None) -> AffectedMessages:
+        entity = InputPeerChat(chat_id) if chat_id else InputUserSelf()
+        client = await self.connect(phone_number)
+        result = await client.delete_messages(entity, messages_id)
+        await client.disconnect()
+        return result
+
+    async def get_contacts(self, phone_number: str) -> str:
         client = await self.connect(phone_number)
         if (await client.get_me()).bot:
             await client.disconnect()
