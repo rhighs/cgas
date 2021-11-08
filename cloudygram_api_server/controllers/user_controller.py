@@ -87,10 +87,10 @@ class UserController:
     @action(name="downloadProfilePhoto", renderer="json", request_method="GET")
     def download_profile_photo(self):
         requestDict: dict = self.request.matchdict
-        phone_number = requestDict[tg_data.phone][1:]
+        phone_number = self.request.matchdict[tg_data.phone][1:]
         path = None
-        if file.path in requestDict:
-            path = requestDict[file.path]
+        if file.path in self.request.GET:
+            path = self.request.GET[file.path]
         wrap = cloudygram_api_server.get_tt()
         try:
             result = self.pool.submit(
