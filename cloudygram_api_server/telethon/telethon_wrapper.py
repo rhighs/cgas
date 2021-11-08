@@ -56,7 +56,7 @@ class TtWrap:
 
     async def send_private_message(self, phone_number: str, message: Message):
         client = await self.connect(phone_number) 
-        await client.send_message("me", message)
+        await client.send_message(InputUserSelf(), message)
         await client.disconnect()
 
     async def create_session(self, phone_number):
@@ -176,7 +176,9 @@ class TtWrap:
         me: User = await client.get_me()
         if file_path != None:
             file_path += me.username
-        path = await client.download_profile_photo("me", file=file_path)
+        if os.path.exists(file_path): #avoid duplicate files
+            os.remove(file_path)
+        path = await client.download_profile_photo(InputUserSelf(), file=file_path)
         await client.disconnect()
         return path
 
