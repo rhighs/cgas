@@ -168,7 +168,10 @@ class TtWrap:
         return { "messageId": get_message_id(message_json), "hasRefChanged": False, "message": message_json }
 
     async def download_profile_photo(self, phone_number, file_path=None):
-        client = await self.connect(phone_number)
+        client: TelegramClient = await self.connect(phone_number)
+        me: User = await client.get_me()
+        if file_path != None:
+            file_path += me.username
         path = await client.download_profile_photo("me", file=file_path)
         await client.disconnect()
         return path
