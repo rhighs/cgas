@@ -1,4 +1,3 @@
-
 class TTUnathorizedException(Exception):
     def __init__(self, message: str = None):
         if message == None:

@@ -1,6 +1,6 @@
-import json
-from base64 import encodebytes, decodebytes
 from telethon.tl.types import MessageMediaDocument, Document, UpdateNewMessage, UpdateMessageID, Updates, PeerUser, UpdateReadHistoryInbox, Message
+from base64 import encodebytes, decodebytes
+import json
 
 def remove_buggy_chars(json_string: str) -> dict:
     if json_string[1:] == "\"":

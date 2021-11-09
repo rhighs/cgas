@@ -1,2 +1,1 @@
-from .logger import Logger
-from .utilities import *
+from .utilities import jres, CGMessage

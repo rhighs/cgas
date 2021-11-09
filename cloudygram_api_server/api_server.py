@@ -23,7 +23,7 @@ class ApiServer:
     
     def run(self):
         global tt_wrap
-        tt_wrap = TtWrap(api_id = self.api_id, api_hash=self.api_hash)
+        tt_wrap = TtWrap(api_id=self.api_id, api_hash=self.api_hash)
         pyramid_app = configure(settings=None)
         server = make_server(self.host_ip, self.port, app=pyramid_app)
         server.serve_forever()
