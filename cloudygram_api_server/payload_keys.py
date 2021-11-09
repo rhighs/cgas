@@ -1,17 +1,17 @@
 from types import SimpleNamespace
 
-tg_data = SimpleNamespace()
-file = SimpleNamespace()
-dl = SimpleNamespace()
+telegram_keys = SimpleNamespace()
+download_keys = SimpleNamespace()
+file_keys= SimpleNamespace()
 
-tg_data.code_hash = "phoneCodeHash"
-tg_data.phone = "phoneNumber"
-tg_data.fname = "firstName"
-tg_data.lname = "lastName"
-tg_data.code = "phoneCode"
+telegram_keys.phone_code_hash = "phoneCodeHash"
+telegram_keys.phone_number = "phoneNumber"
+telegram_keys.first_name = "firstName"
+telegram_keys.last_name = "lastName"
+telegram_keys.phone_code = "phoneCode"
 
-file.mime = "mimeType"
-file.path = "path"
-file.name = "file"
+file_keys.mime_type= "mimeType"
+file_keys.path = "path"
+file_keys.name = "file"
 
-dl.message = "message"
+download_keys.message = "message"

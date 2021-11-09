@@ -1,9 +1,7 @@
-from cloudygram_api_server.controllers      import HomeController, UserController, MessagesController
-from wsgiref.simple_server                  import make_server
-from pyramid.config                         import Configurator
-from cloudygram_api_server.telethon         import TtWrap
-
-tt_wrap = None
+from cloudygram_api_server.controllers import HomeController, UserController, MessagesController
+from telethon.telethon_wrapper import init_telethon
+from wsgiref.simple_server import make_server
+from pyramid.config import Configurator
 
 def configure(**settings):
     with Configurator(settings=settings) as config:
@@ -18,17 +16,9 @@ class ApiServer:
     def __init__(self, api_id, api_hash, host_ip, port):
         self.host_ip = host_ip
         self.port = port
-        self.api_id = api_id
-        self.api_hash = api_hash
+        init_telethon(api_id, api_hash)
     
     def run(self):
-        global tt_wrap
-        tt_wrap = TtWrap(api_id=self.api_id, api_hash=self.api_hash)
         pyramid_app = configure(settings=None)
         server = make_server(self.host_ip, self.port, app=pyramid_app)
         server.serve_forever()
-
-def get_tt():
-    if(type(tt_wrap) is None):
-        raise Exception("Telethon was not instanciated")
-    return tt_wrap

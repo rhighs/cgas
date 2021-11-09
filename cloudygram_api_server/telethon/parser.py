@@ -1,6 +1,8 @@
-from telethon.tl.types import MessageMediaDocument, Document, UpdateNewMessage, UpdateMessageID, Updates, PeerUser, UpdateReadHistoryInbox, Message
+from telethon.tl.types import MessageMediaDocument, Document
 from base64 import encodebytes, decodebytes
+from typing import Union
 import json
+
 
 def remove_buggy_chars(json_string: str) -> dict:
     if json_string[1:] == "\"":
@@ -45,7 +47,7 @@ def str_parse_updates(update_json: str) -> MessageMediaDocument:
             ttl_seconds=    media_dict["ttl_seconds"]
             )
 
-def parse_updates(update_json) -> MessageMediaDocument:
+def parse_updates(update_json: Union[str, dict]) -> MessageMediaDocument:
     if type(update_json) is str:
         return str_parse_updates(update_json)
     media_dict = update_json["updates"][1]["message"]["media"]
@@ -61,7 +63,13 @@ def with_new_ref(message_dict: dict, ref: bytes) -> dict:
     message_dict["updates"][1]["message"]["media"]["document"]["file_reference"] = encodebytes(ref).decode()
     return message_dict
 
-#test
+"""
+I'll leave this here in case of future implementations, i know it's something
+that will most certainly turn out to be useless, but i have faith in someone to need
+the entire message object. 
+
+from telethon.tl.types import UpdateNewMessage, UpdateMessageID, Updates, PeerUser, UpdateReadHistoryInbox, Message
+
 def __parse_updates(update_json) -> Updates:
     if type(update_json) is str:
         return str_parse_updates(update_json)
@@ -115,10 +123,8 @@ def __parse_updates(update_json) -> Updates:
             #others default to null
             )
 
-    """
     up_read_header = UpdateReadHeader(
             )
-    """
 
     updates = [
             up_msg_id,
@@ -133,3 +139,4 @@ def __parse_updates(update_json) -> Updates:
             None
             )
 
+"""
