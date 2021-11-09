@@ -6,6 +6,7 @@ from telethon.tl.types.auth         import SentCode
 from telethon.tl                    import functions, types
 from telethon.tl.types              import Message, MessageMediaDocument, DocumentAttributeFilename, UpdateShortMessage
 from telethon.tl.types              import User, InputPeerChat, InputUserSelf
+from typing                         import List
 import pyramid.httpexceptions       as exc
 import os
 from pathlib import Path
@@ -194,6 +195,11 @@ class TtWrap:
         ))
         await client.disconnect()
         return result.stringify()
+
+    async def delete_messages(self, phone_number: str, message_ids: List[str]):
+        client = await self.connect(phone_number)
+        await client.delete_messages(InputUserSelf(), message_ids)
+        await client.disconnect()
 
 async def file_refresh(client_instance: TelegramClient, message_id: int) -> bytes:
     async for m in client_instance.iter_messages(InputUserSelf(), ids=message_id):

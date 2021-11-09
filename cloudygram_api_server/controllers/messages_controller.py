@@ -16,12 +16,23 @@ class MessagesController(object):
         self.pool = concurrent.futures.ThreadPoolExecutor()
         self.wrap = cloudygram_api_server.get_tt()
 
-    @action(name="getMessages", renderer="json", request_method="GET")
+    @action(name="messages", renderer="json", request_method="GET")
     def get_messages(self):
-        phone_number= self.request.matchdict["phoneNumber"][1:]
+        phone_number = self.request.matchdict["phoneNumber"][1:]
         self.wrap.create_session(phone_number) 
         result = self.pool.submit(
                 asyncio.run,
                 self.wrap.get_messages(phone_number)
                 ).result()
         return jres(TtModels.message_list(result), status=200)
+
+    @action(name="deleteMessages", renderer="json", request_method="POST")
+    def delete_messages(self):
+        phone_number = self.request.matchdict["phoneNumber"][1:]
+        message_ids = self.request.json_body["ids"]
+        self.pool.submit(
+                asyncio.run,
+                self.wrap.delete_messages(phone_number, message_ids)
+                ).result()
+        return jres(UserModels.success(), status=200)
+

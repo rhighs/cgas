@@ -15,9 +15,13 @@ class UserModels:
                 SUCCESS_KEY : True,
                 MESSAGE_KEY : message,
             }
+        elif data != None:
+            return {
+                SUCCESS_KEY : True,
+                DATA_KEY : data,
+            }
         return {
             SUCCESS_KEY : True,
-            DATA_KEY : data,
         }
 
     @staticmethod
