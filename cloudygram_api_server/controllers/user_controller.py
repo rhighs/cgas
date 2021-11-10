@@ -4,6 +4,7 @@ from cloudygram_api_server.models import UserModels
 from cloudygram_api_server.scripts import jres
 from pyramid_handlers import action
 from pyramid.request import Request
+from typing import Union
 import concurrent.futures
 import asyncio
 import json
@@ -15,6 +16,15 @@ class UserController:
     def __init__(self, request):
         self.request: Request = request
         self.pool = concurrent.futures.ThreadPoolExecutor()
+        self.expected_errors = (TTGenericException, TTUnathorizedException, TTFileTransferException, Exception)
+
+    def handle_exceptions(self, exception: Union[TTGenericException, TTUnathorizedException, TTFileTransferException, Exception]) -> dict:
+        if type(exception) is TTGenericException or type(exception) is Exception or type(exception) is TTFileTransferException:
+            return jres(UserModels.failure(str(exception)), status=500)
+        elif type(exception) is TTUnathorizedException:
+            return jres(UserModels.failure(str(exception)), status=401)
+        else:
+            return jres(UserModels.failure(str(exception)), status=500)
 
     @action(name="userInfo", renderer="json", request_method="GET")
     def user_info_req(self):
@@ -25,8 +35,8 @@ class UserController:
                 asyncio.run,
                 get_me(phone_number)
             ).result()
-        except Exception as e:
-            return jres(UserModels.failure(str(e)), 500)
+        except self.expected_errors as exc:
+            return self.handle_exceptions(exc)
         return jres(UserModels.userDetails(user), 200)
 
     @action(name="uploadFile", renderer="json", request_method="POST")
@@ -40,8 +50,8 @@ class UserController:
                 asyncio.run,
                 upload_file(phone_number, file_name, file_stream, mime_type)
             ).result()
-        except Exception as e:
-            return jres(UserModels.failure(str(e)), status=500)
+        except self.expected_errors as exc:
+            return self.handle_exceptions(exc)
         return jres(result, 200)
 
     @action(name="downloadFile", renderer="json", request_method="POST")
@@ -58,17 +68,20 @@ class UserController:
                 asyncio.run,
                 download_file(phone_number, message_json, path)
             ).result()
-        except Exception as e:
-            return jres(UserModels.failure(str(e)), 500)
+        except self.expected_errors as exc:
+            return self.handle_exceptions(exc)
         return jres(result, 200)
 
     @action(name="isAuthorized", renderer="json", request_method="GET")
     def is_authorized_req(self):
         phone_number = self.request.matchdict[telegram_keys.phone_number][1:]
-        result = self.pool.submit(
-            asyncio.run,
-            is_authorized(phone_number)
-        ).result()
+        try:
+            result = self.pool.submit(
+                asyncio.run,
+                is_authorized(phone_number)
+            ).result()
+        except self.expected_errors as exc:
+            return self.handle_exceptions(exc)
         response = (
             UserModels.success("User is authorized")
             if result
@@ -87,8 +100,8 @@ class UserController:
                 asyncio.run,
                 download_profile_photo(phone_number, path)
             ).result()
-        except Exception as e:
-            return jres(UserModels.failure(str(e)), 500)
+        except self.expected_errors as exc:
+            return self.handle_exceptions(exc)
 
         if result is None:
             response = UserModels.failure(
@@ -109,8 +122,8 @@ class UserController:
                 asyncio.run,
                 get_contacts(phone_number)
             ).result()
-        except Exception as e:
-            return jres(UserModels.failure(message=str(e)), 500)
+        except self.expected_errors as exc:
+            return self.handle_exceptions(exc)
         response = UserModels.success(
             message="Contacts fetched.",
             data=result
@@ -125,8 +138,8 @@ class UserController:
                 asyncio.run,
                 logout(phone_number)
             ).result()
-        except Exception as e:
-            return jres(UserModels.failure(message=str(e)), 500)
+        except self.expected_errors as exc:
+            return self.handle_exceptions(exc)
         if not result:
             return jres(UserModels.failure(message="Clouldn't log out"), 200)
         response = UserModels.success(
@@ -138,10 +151,13 @@ class UserController:
     @action(name="sessionValid", renderer="json", request_method="GET")
     def session_valid_req(self):
         phone_number = self.request.matchdict[telegram_keys.phone_number][1:]
-        result = self.pool.submit(
-            asyncio.run,
-            session_valid(phone_number)
-        ).result()
+        try:
+            result = self.pool.submit(
+                asyncio.run,
+                session_valid(phone_number)
+            ).result()
+        except self.expected_errors as exc:
+            return self.handle_exceptions(exc)
         if result:
             response = UserModels.success(
                 message="Session is still valid."
@@ -151,3 +167,4 @@ class UserController:
                 message="Session is not valid."
             )
         return jres(response, 200)
+
