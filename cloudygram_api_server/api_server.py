@@ -1,5 +1,5 @@
 from cloudygram_api_server.controllers import HomeController, UserController, MessagesController
-from telethon.telethon_wrapper import init_telethon
+from cloudygram_api_server.telethon.telethon_wrapper import init_telethon
 from wsgiref.simple_server import make_server
 from pyramid.config import Configurator
 
