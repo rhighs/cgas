@@ -26,15 +26,15 @@ def init_telethon(api_id: str, api_hash: str, workdir: str = "sessions"):
 
 class Client:
 
-    def __init__(self, phone_number: str):
+    def __init__(self, phone_number: str, check_auth: bool = True):
         self.workdir = WORKDIR
         self.phone_number = phone_number
-        self.client = TelegramClient(
-            api_id=API_ID, api_hash=API_HASH, session=WORKDIR)
+        self.check_auth = check_auth
+        self.client = TelegramClient(api_id=API_ID, api_hash=API_HASH, session=WORKDIR)
 
     async def __aenter__(self):
         await self.client.connect()
-        if (await self.client.is_user_authorized()):
+        if (await self.client.is_user_authorized()) or not self.check_auth:
             return self.client
         else:
             raise TTUnathorizedException()
@@ -72,7 +72,7 @@ async def send_private_message(phone_number: str, message: Message):
 
 
 async def send_code(phone_number: str) -> str:
-    async with Client(phone_number) as client:
+    async with Client(phone_number, check_auth=False) as client:
         try:
             code: SentCode = await client.send_code_request(phone_number)
         except Exception as e:
@@ -81,17 +81,17 @@ async def send_code(phone_number: str) -> str:
 
 
 async def signin(phone_number: str, phone_code_hash: str, phone_code: str) -> User:
-    async with Client(phone_number) as client:
+    async with Client(phone_number, check_auth=False) as client:
         try:
             result: User = await client.sign_in(phone_number, phone_code, phone_code_hash=phone_code_hash)
         except Exception as e:
             raise TTSignInException(str(e))
-    return result  # of type User
+    return result  #of type User
 
 
 async def signup(phone_number: str, code: str, phone_code_hash: str,
                  first_name: str, last_name: str, phone: str = None) -> User:
-    async with Client(phone_number) as client:
+    async with Client(phone_number, check_auth=False) as client:
         try:
             result: User = await client.sign_up(
                 code=code,
@@ -106,7 +106,7 @@ async def signup(phone_number: str, code: str, phone_code_hash: str,
 
 
 async def qr_login(phone_number: str):
-    async with Client(phone_number) as client:
+    async with Client(phone_number, check_auth=False) as client:
         result = await client.qr_login()
     return result
 
