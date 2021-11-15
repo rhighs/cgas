@@ -28,7 +28,6 @@ class UserController:
 
     @action(name="userInfo", renderer="json", request_method="GET")
     def user_info_req(self):
-        # remove + at the beginning
         phone_number = self.request.matchdict[telegram_keys.phone_number][1:]
         try:
             user = self.pool.submit(
@@ -92,7 +91,7 @@ class UserController:
     @action(name="downloadProfilePhoto", renderer="json", request_method="GET")
     def download_profile_photo_req(self):
         phone_number = self.request.matchdict[telegram_keys.phone_number][1:]
-        path = None
+        path: str = ""
         if file_keys.path in self.request.GET:
             path = self.request.GET[file_keys.path]
         try:
