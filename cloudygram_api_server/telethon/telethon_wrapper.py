@@ -27,10 +27,10 @@ def init_telethon(api_id: str, api_hash: str, workdir: str = "sessions"):
 class Client:
 
     def __init__(self, phone_number: str, check_auth: bool = True):
-        self.workdir = WORKDIR
+        self.workdir = WORKDIR + "/" + phone_number
         self.phone_number = phone_number
         self.check_auth = check_auth
-        self.client = TelegramClient(api_id=API_ID, api_hash=API_HASH, session=WORKDIR)
+        self.client = TelegramClient(api_id=API_ID, api_hash=API_HASH, session=self.workdir)
 
     async def __aenter__(self):
         await self.client.connect()
