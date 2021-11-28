@@ -1,18 +1,11 @@
 import sys
 import json
-from cloudygram_api_server import composeHelp
 from cloudygram_api_server import ApiServer
 from os import path
 
 PATH = "keys.json"
 
 def startup():
-    if(len(sys.argv) > 1):
-        command = sys.argv[1]
-        if(command == "--help"):
-            print(composeHelp())
-            exit(0)
-
     if path.exists(PATH):
         with open(PATH, "r") as f:
             data = json.load(f)

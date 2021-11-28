@@ -1,0 +1,12 @@
+Controllers:
+    - [] Handle TTUnaithorizedException (in all controllers)
+    - [] Generate better respose methods in case of statuses != 200
+
+Wrapper:
+    - [] Take a look at parser.py an check if anything still makes sense
+      at the state of the project as of now.
+
+Documentation?:
+    - Take a look at https://docs.python.org/3/library/pydoc.html
+    - Start somewhere simple (controllers?)
+

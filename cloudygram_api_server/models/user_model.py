@@ -1,9 +1,10 @@
-from .constants     import SUCCESS_KEY, MESSAGE_KEY, DATA_KEY, DEFAULT_FAILURE
+from .constants import DEFAULT_SUCCESS, SUCCESS_KEY, MESSAGE_KEY, DATA_KEY, DEFAULT_FAILURE
 from telethon.tl.types import User
+from typing import Any
 
 class UserModels:
     @staticmethod
-    def success(message=None, data=None):
+    def success(message: str = None, data: Any = None) -> dict:
         if message != None and data != None:
             return {
                 SUCCESS_KEY : True,
@@ -20,12 +21,10 @@ class UserModels:
                 SUCCESS_KEY : True,
                 DATA_KEY : data,
             }
-        return {
-            SUCCESS_KEY : True,
-        }
+        return DEFAULT_SUCCESS
 
     @staticmethod
-    def failure(message=None):
+    def failure(message: str = None) -> dict:
         if message != None:
             return {
                 SUCCESS_KEY: False,
@@ -34,7 +33,7 @@ class UserModels:
         return DEFAULT_FAILURE
 
     @staticmethod
-    def userDetails(userDetails):
+    def userDetails(userDetails: User) -> dict:
         return {
             SUCCESS_KEY: True,
             DATA_KEY: {
@@ -47,7 +46,7 @@ class UserModels:
         }
 
     @staticmethod
-    def unauthorized():
+    def unauthorized() -> dict:
         return {
             SUCCESS_KEY: False,
             MESSAGE_KEY: "Invalid phone number or session expired!"

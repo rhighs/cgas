@@ -2,6 +2,7 @@ keys.json
 *.session
 .vscode/
 ./example/test/
+todo.txt
 
 __pycache__/
 *.py[cod]

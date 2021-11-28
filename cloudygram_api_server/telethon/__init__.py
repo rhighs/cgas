@@ -1,1 +1,1 @@
-from .telethon_wrapper import TtWrap
+from .telethon_wrapper import *

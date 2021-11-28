@@ -1,207 +1,220 @@
-from telethon                       import TelegramClient
-from io                             import BytesIO
-from .parser                        import parse_updates, get_message_id, with_new_ref
-from cloudygram_api_server.models   import TtModels
-from telethon.tl.types.auth         import SentCode
-from telethon.tl                    import functions, types
-from telethon.tl.types              import Message, MessageMediaDocument, DocumentAttributeFilename, UpdateShortMessage
-from telethon.tl.types              import User, InputPeerChat, InputUserSelf
-from typing                         import List
-import pyramid.httpexceptions       as exc
-import os
+from cloudygram_api_server.telethon.exceptions import TTUnathorizedException, TTGenericException, TTSignInException, TTFileTransferException
+from telethon.tl.types import Message, MessageMediaDocument, DocumentAttributeFilename, UpdateShortMessage
+from telethon.tl.types import User, InputPeerChat, InputUserSelf
+from telethon.tl.types.messages import AffectedMessages
+from telethon.tl.types.auth import SentCode
+from telethon.tl import functions, types
+from telethon import TelegramClient
+from .parser import parse_updates, get_message_id, with_new_ref
+from typing import List, Tuple
 from pathlib import Path
+from io import BytesIO
+import os
 
-class TtWrap:
-    def __init__(self, api_id, api_hash):
-        self.api_id = api_id
-        self.api_hash = api_hash
-        self.initial_ref = b'initialfilereference'
-        self.workdir = os.path.join(os.getcwd(), "sessions")
+WORKDIR = ""
+API_ID = ""
+API_HASH = ""
+INITIAL_FILE_REF: bytes = b'initialfilereference'
 
-    async def connect(self, phone_number):
-        client = self.create_client(phone_number)
-        await client.connect()
-        if (await client.is_user_authorized()):
-            return client
+
+def init_telethon(api_id: str, api_hash: str, workdir: str = "sessions"):
+    global WORKDIR, API_ID, API_HASH
+    API_ID = api_id
+    API_HASH = api_hash
+    WORKDIR = os.path.join(os.getcwd(), workdir)
+
+
+class Client:
+
+    def __init__(self, phone_number: str, check_auth: bool = True):
+        self.workdir = WORKDIR + "/" + phone_number
+        self.phone_number = phone_number
+        self.check_auth = check_auth
+        self.client = TelegramClient(api_id=API_ID, api_hash=API_HASH, session=self.workdir)
+
+    async def __aenter__(self):
+        await self.client.connect()
+        if (await self.client.is_user_authorized()) or not self.check_auth:
+            return self.client
         else:
-            raise exc.HTTPUnauthorized
+            raise TTUnathorizedException()
 
-    def create_client(self, phone_number):
-        workdir = self.workdir + "/" + phone_number
-        return TelegramClient(api_id=self.api_id, api_hash=self.api_hash, session=workdir)
-    
-    async def clean(self):
-        sessions = os.listdir(self.workdir)
-        files = [file for file in sessions if os.path.isfile(os.path.join(self.workdir, file))]
-        for file in files:
-            session_name = Path(file).stem
-            if not self.session_valid(session_name):
-                os.remove(self.workdir + "/" + file)
+    async def __aexit__(self, exc_type, exc_value, exc_tb):
+        await self.client.disconnect()
 
-    async def session_valid(self, phone_number) -> bool:
-        client = self.create_client(phone_number)
-        await client.connect()
+
+async def clean():
+    sessions = os.listdir(WORKDIR)
+    files = [file for file in sessions if os.path.isfile(
+        os.path.join(WORKDIR, file))]
+    for file in files:
+        session_name = Path(file).stem
+        if not session_valid(session_name):
+            os.remove(WORKDIR + "/" + file)
+
+
+async def session_valid(phone_number: str) -> bool:
+    async with Client(phone_number) as client:
         result = await client.get_me()
-        await client.disconnect()
-        return not (result is None)
+    return result is not None
 
-    async def is_authorized(self, phone_number):
-        client = self.create_client(phone_number)
-        await client.connect()
-        me = await client.get_me()
+
+async def is_authorized(phone_number: str) -> bool:
+    async with Client(phone_number) as client:
+        me: User = await client.get_me()
         authorized = await client.is_user_authorized()
-        await client.disconnect()
-        return authorized and (me is not None)
+    return authorized and (me is not None)
 
-    async def send_private_message(self, phone_number, message):
-        client = await self.connect(phone_number) 
+
+async def send_private_message(phone_number: str, message: Message):
+    async with Client(phone_number) as client:
         await client.send_message(InputUserSelf(), message)
-        await client.disconnect()
 
-    async def create_session(self, phone_number):
-        client = self.create_client(phone_number)
-        await client.disconnect()
 
-    async def send_code(self, phone_number):
-        client = self.create_client(phone_number)
-        await client.connect()
+async def send_code(phone_number: str) -> str:
+    async with Client(phone_number, check_auth=False) as client:
         try:
             code: SentCode = await client.send_code_request(phone_number)
-        except Exception as e :
-            await client.disconnect()
-            return TtModels.send_code_failure(str(e))
-        await client.disconnect()
-        return code.phone_code_hash
-
-    async def signin(self, phone_number, phone_code_hash, phone_code):
-        client = self.create_client(phone_number)
-        await client.connect()
-        try:
-            result: User = await client.sign_in(phone=phone_number, phone_code_hash=phone_code_hash, code=phone_code)
         except Exception as e:
-            await client.disconnect()
-            return TtModels.sing_in_failure(str(e))
-        await client.disconnect()
-        return result #of type User
+            raise TTGenericException(str(e))
+    return code.phone_code_hash
 
-    async def signup(self, phone_number, code, phone_code_hash, first_name, last_name, phone=None):
-        client = self.create_client(phone_number)
+
+async def signin(phone_number: str, phone_code_hash: str, phone_code: str) -> User:
+    async with Client(phone_number, check_auth=False) as client:
+        try:
+            result: User = await client.sign_in(phone_number, phone_code, phone_code_hash=phone_code_hash)
+        except Exception as e:
+            raise TTSignInException(str(e))
+    return result  #of type User
+
+
+async def signup(phone_number: str, code: str, phone_code_hash: str,
+                 first_name: str, last_name: str, phone: str = None) -> User:
+    async with Client(phone_number, check_auth=False) as client:
         try:
             result: User = await client.sign_up(
-                    code=code,
-                    first_name=first_name, 
-                    last_name=last_name, 
-                    phone=phone,
-                    phone_code_hash=phone_code_hash
-                    )
+                code=code,
+                first_name=first_name,
+                last_name=last_name,
+                phone=phone,
+                phone_code_hash=phone_code_hash
+            )
         except Exception as e:
-            await client.disconnect()
-            return TtModels.sing_in_failure(str(e))
-        await client.disconnect()
-        return result
+            raise TTSignInException(str(e))
+    return result
 
-    async def qr_login(self, phone_number):
-        client = self.create_client(phone_number)
-        await client.connect()
+
+async def qr_login(phone_number: str):
+    async with Client(phone_number, check_auth=False) as client:
         result = await client.qr_login()
-        await client.disconnect()
-        return result
+    return result
 
-    async def logout(self, phone_number):
-        client = await self.connect(phone_number)
-        result = await client.log_out()
-        await client.disconnect()
-        return result
 
-    async def get_me(self, phone_number):
-        client = await self.connect(phone_number)
-        result = await client.get_me()
-        await client.disconnect()
-        return result
+async def logout(phone_number: str) -> bool:
+    async with Client(phone_number) as client:
+        result: bool = await client.log_out()
+    return result
 
-    async def upload_file(self, phone_number, file_name, file_stream: BytesIO, mime_type):
-        client = await self.connect(phone_number)
+
+async def get_me(phone_number: str) -> User:
+    async with Client(phone_number) as client:
+        result: User = await client.get_me()
+    return result
+
+
+async def upload_file(phone_number: str, file_name: str, file_stream: BytesIO, mime_type: str):
+    async with Client(phone_number) as client:
         uploaded_file = await client.upload_file(file=file_stream)
-        me = await client.get_me()
+        me: User = await client.get_me()
         media = types.InputMediaUploadedDocument(
             file=uploaded_file,
             stickers=[types.InputDocument(
                 id=uploaded_file.id,
                 access_hash=uploaded_file.id,
-                file_reference=self.initial_ref
+                file_reference=INITIAL_FILE_REF
             )],
             ttl_seconds=100,
             mime_type=mime_type,
             attributes=[
                 DocumentAttributeFilename(file_name)
-                ]
+            ]
         )
 
-        try: 
+        try:
             updates: UpdateShortMessage = await client(functions.messages.SendMediaRequest(
-                peer = me,
-                media = media,
-                message = "document id: " + str(media.stickers[0].id)
-                ))
+                peer=me,
+                media=media,
+                message="document id: " + str(media.stickers[0].id)
+            ))
         except Exception as e:
-            print(str(e))
-        await client.disconnect()
-        return updates.to_json()
+            raise TTFileTransferException(str(e))
+    return updates.to_json()
 
-    async def download_file(self, phone_number, message_json, path):
-        client = await self.connect(phone_number)
+
+async def download_file(phone_number: str, message_json: str, file_path: str) -> Tuple[dict, bool]:
+    async with Client(phone_number) as client:
         media: MessageMediaDocument = parse_updates(message_json)
         message_id = get_message_id(message_json)
+
         async def try_download():
-            if path is not None:
-                await client.download_media(media, path)
+            if file_path is not None:
+                await client.download_media(media, file_path)
             else:
                 await client.download_media(media)
         try:
             await try_download()
-        except: #file ref
-            ref = await file_refresh(client, message_id)
+        except:  # file ref exception, dont care about getting the type
+            ref: bytes = await file_refresh(client, message_id)
             media.document.file_reference = ref
             await try_download()
-            await client.disconnect() 
-            return { "hasRefChanged": True, "message" : with_new_ref(message_json, ref) }
-        await client.disconnect() 
-        return { "messageId": get_message_id(message_json), "hasRefChanged": False, "message": message_json }
+            return True, with_new_ref(message_json, ref)
+    return False, message_json
 
-    async def download_profile_photo(self, phone_number, file_path=None):
-        client: TelegramClient = await self.connect(phone_number)
+
+async def download_profile_photo(phone_number: str, filepath: str = None, filename: str = None) -> bool:
+    async with Client(phone_number) as client:
         me: User = await client.get_me()
-        if file_path != None:
-            file_path += me.username
-        if os.path.exists(file_path): #avoid duplicate files
-            os.remove(file_path)
-        path = await client.download_profile_photo(InputUserSelf(), file=file_path)
-        await client.disconnect()
-        return path
+        if filepath != None and filename is None:
+            filepath += me.username
+        elif filepath != None and filename is not None:
+            filepath += filename
+        if os.path.exists(filepath): #this helps avoiding duplicate files
+            os.remove(filepath)
+        download_path = await client.download_profile_photo(InputUserSelf(), file=filepath)
+    return download_path == filepath
 
-    async def get_messages(self, phone_number):
-        client = await self.connect(phone_number)
+
+async def get_messages(phone_number: str) -> List:
+    async with Client(phone_number) as client:
         result = await client.get_messages(InputUserSelf(), None)
-        await client.disconnect()
-        return result
+    return result
 
-    async def get_contacts(self, phone_number):
-        client = await self.connect(phone_number)
+
+async def delete_messages(phone_number: str, message_ids: List[str], chat_id: str = None) -> AffectedMessages:
+    entity = InputPeerChat(chat_id) if chat_id else InputUserSelf()
+    async with Client(phone_number) as client:
+        result: AffectedMessages = await client.delete_messages(entity, message_ids)
+    return result
+
+
+async def get_contacts(phone_number: str) -> str:
+    async with Client(phone_number) as client:
         if (await client.get_me()).bot:
             await client.disconnect()
-            raise exc.HTTPUnauthorized()
+            raise TTUnathorizedException()
         result = await client(functions.contacts.GetContactsRequest(
             hash=0
         ))
-        await client.disconnect()
-        return result.stringify()
+    return result.stringify()
 
-    async def delete_messages(self, phone_number: str, message_ids: List[str]):
-        client = await self.connect(phone_number)
-        await client.delete_messages(InputUserSelf(), message_ids)
-        await client.disconnect()
+
+async def delete_messages(self, phone_number: str, message_ids: List[str]):
+    client = await self.connect(phone_number)
+    await client.delete_messages(InputUserSelf(), message_ids)
+    await client.disconnect()
+
 
 async def file_refresh(client_instance: TelegramClient, message_id: int) -> bytes:
     async for m in client_instance.iter_messages(InputUserSelf(), ids=message_id):
         return m.media.document.file_reference
-

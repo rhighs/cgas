@@ -1,13 +1,14 @@
-from pyramid_handlers                   import action
-from pyramid.request                    import Request
-from pyramid.httpexceptions             import HTTPUnauthorized
-from cloudygram_api_server.models       import UserModels
-from telethon.tl.types                  import MessageMediaDocument
-from cloudygram_api_server.scripts      import jres
-from cloudygram_api_server.payload_keys import tg_data, dl, file
-import asyncio, concurrent.futures
-import cloudygram_api_server
+from cloudygram_api_server.payload_keys import telegram_keys, download_keys, file_keys
+from cloudygram_api_server.telethon.telethon_wrapper import *
+from cloudygram_api_server.models import UserModels
+from cloudygram_api_server.scripts import jres
+from pyramid_handlers import action
+from pyramid.request import Request
+from typing import Union
+import concurrent.futures
+import asyncio
 import json
+
 
 class UserController:
     __autoexpose__ = None
@@ -15,68 +16,71 @@ class UserController:
     def __init__(self, request):
         self.request: Request = request
         self.pool = concurrent.futures.ThreadPoolExecutor()
+        self.expected_errors = (TTGenericException, TTUnathorizedException, TTFileTransferException, Exception)
+
+    def handle_exceptions(self, exception: Union[TTGenericException, TTUnathorizedException, TTFileTransferException, Exception]) -> dict:
+        if type(exception) is TTGenericException or type(exception) is Exception or type(exception) is TTFileTransferException:
+            return jres(UserModels.failure(str(exception)), status=500)
+        elif type(exception) is TTUnathorizedException:
+            return jres(UserModels.failure(str(exception)), status=401)
+        else:
+            return jres(UserModels.failure(str(exception)), status=500)
 
     @action(name="userInfo", renderer="json", request_method="GET")
-    def user_info(self):
-        phone_number = self.request.matchdict[tg_data.phone][1:] #remove + at the beginning
-        wrap = cloudygram_api_server.get_tt()
+    def user_info_req(self):
+        phone_number = self.request.matchdict[telegram_keys.phone_number][1:]
         try:
             user = self.pool.submit(
                 asyncio.run,
-                wrap.get_me(phone_number)
+                get_me(phone_number)
             ).result()
-        except HTTPUnauthorized as u:
-            return jres(UserModels.unauthorized(), u.status_code),
-        except Exception as e:
-            return jres(UserModels.failure(str(e)), 500)
+        except self.expected_errors as exc:
+            return self.handle_exceptions(exc)
         return jres(UserModels.userDetails(user), 200)
 
     @action(name="uploadFile", renderer="json", request_method="POST")
-    def upload_file(self):
-        phone_number = self.request.matchdict[tg_data.phone][1:]
-        file_stream = self.request.POST[file.name].file
-        file_name = self.request.POST[file.name].filename
-        mime_type = self.request.POST[file.mime]
-        wrap = cloudygram_api_server.get_tt()
+    def upload_file_req(self):
+        phone_number = self.request.matchdict[telegram_keys.phone_number][1:]
+        file_stream = self.request.POST[file_keys.name].file
+        file_name = self.request.POST[file_keys.name].filename
+        mime_type = self.request.POST[file_keys.mime_type]
         try:
             result = self.pool.submit(
                 asyncio.run,
-                wrap.upload_file(phone_number, file_name, file_stream, mime_type)
+                upload_file(phone_number, file_name, file_stream, mime_type)
             ).result()
-        except HTTPUnauthorized as u:
-            return jres(UserModels.unauthorized(), u.status_code)
-        except Exception as e:
-            return jres(UserModels.failure(str(e)), status=500)
+        except self.expected_errors as exc:
+            return self.handle_exceptions(exc)
         return jres(result, 200)
-    
+
     @action(name="downloadFile", renderer="json", request_method="POST")
-    def download_file(self):
-        phone_number = self.request.matchdict[tg_data.phone][1:]
-        message_json = self.request.json_body[dl.message]
+    def download_file_req(self):
+        phone_number = self.request.matchdict[telegram_keys.phone_number][1:]
+        message_json = self.request.json_body[download_keys.message]
         if type(message_json) is str:
             message_json = json.loads(message_json)
         path = None
-        if file.path in self.request.json_body:
-            path = self.request.json_body[file.path]
+        if file_keys.path in self.request.json_body:
+            path = self.request.json_body[file_keys.path]
         try:
             result = self.pool.submit(
                 asyncio.run,
-                cloudygram_api_server.get_tt().download_file(phone_number, message_json, path)
+                download_file(phone_number, message_json, path)
             ).result()
-        except HTTPUnauthorized as u:
-            return jres(UserModels.unauthorized(), u.status_code)
-        except Exception as e:
-            return jres(UserModels.failure(str(e)), 500)
+        except self.expected_errors as exc:
+            return self.handle_exceptions(exc)
         return jres(result, 200)
 
     @action(name="isAuthorized", renderer="json", request_method="GET")
-    def is_authorized(self):
-        phone_number = self.request.matchdict[tg_data.phone][1:]
-        wrap = cloudygram_api_server.get_tt()
-        result = self.pool.submit(
-            asyncio.run,
-            wrap.is_authorized(phone_number)
-        ).result()
+    def is_authorized_req(self):
+        phone_number = self.request.matchdict[telegram_keys.phone_number][1:]
+        try:
+            result = self.pool.submit(
+                asyncio.run,
+                is_authorized(phone_number)
+            ).result()
+        except self.expected_errors as exc:
+            return self.handle_exceptions(exc)
         response = (
             UserModels.success("User is authorized")
             if result
@@ -85,65 +89,59 @@ class UserController:
         return jres(response, 200)
 
     @action(name="downloadProfilePhoto", renderer="json", request_method="GET")
-    def download_profile_photo(self):
-        phone_number = self.request.matchdict[tg_data.phone][1:]
-        path = None
-        if file.path in self.request.GET:
-            path = self.request.GET[file.path]
-        wrap = cloudygram_api_server.get_tt()
+    def download_profile_photo_req(self):
+        phone_number = self.request.matchdict[telegram_keys.phone_number][1:]
+        filepath: str = ""
+        filename: str = ""
+        if file_keys.path in self.request.GET:
+            filepath = self.request.GET[file_keys.path]
+        if file_keys.filename in self.request.GET:
+            filename = self.request.GET[file_keys.filename]
         try:
             result = self.pool.submit(
                 asyncio.run,
-                wrap.download_profile_photo(phone_number, path)
+                download_profile_photo(phone_number, filepath, filename)
             ).result()
-        except HTTPUnauthorized as u:
-            return jres(UserModels.unauthorized(), u.status_code)
-        except Exception as e:
-            return jres(UserModels.failure(str(e)), 500)
+        except self.expected_errors as exc:
+            return self.handle_exceptions(exc)
 
         if result is None:
             response = UserModels.failure(
-                    message="User has no profile photo."
-                    )
+                message="User has no profile photo."
+            )
         else:
             response = UserModels.success(
-                    message="Profile photo downloaded.",
-                    data=result #path where the picture got downloaded
-                    )
+                message="Profile photo downloaded.",
+                data=result  # path where the picture got downloaded
+            )
         return jres(response, 200)
 
     @action(name="contacts", renderer="json", request_method="GET")
-    def contacts(self):
-        phone_number = self.request.matchdict[tg_data.phone][1:]
-        wrap = cloudygram_api_server.get_tt()
+    def contacts_req(self):
+        phone_number = self.request.matchdict[telegram_keys.phone_number][1:]
         try:
             result = self.pool.submit(
-                    asyncio.run,
-                    wrap.get_contacts(phone_number)
-                    ).result()
-        except HTTPUnauthorized as u:
-            return jres(UserModels.unauthorized(), u.status_code)
-        except Exception as e:
-            return jres(UserModels.failure(message=str(e)), 500)
+                asyncio.run,
+                get_contacts(phone_number)
+            ).result()
+        except self.expected_errors as exc:
+            return self.handle_exceptions(exc)
         response = UserModels.success(
-                message="Contacts fetched.",
-                data=result
-                )
+            message="Contacts fetched.",
+            data=result
+        )
         return jres(response, 200)
 
     @action(name="logout", renderer="json", request_method="DELETE")
-    def logout(self):
-        phone_number = self.request.matchdict[tg_data.phone][1:]
-        wrap = cloudygram_api_server.get_tt()
+    def logout_req(self):
+        phone_number = self.request.matchdict[telegram_keys.phone_number][1:]
         try:
             result = self.pool.submit(
-                asyncio.run, 
-                wrap.logout(phone_number)
+                asyncio.run,
+                logout(phone_number)
             ).result()
-        except HTTPUnauthorized as u:
-            return jres(UserModels.unauthorized(), u.status_code)
-        except Exception as e:
-            return jres(UserModels.failure(message=str(e)), 500)
+        except self.expected_errors as exc:
+            return self.handle_exceptions(exc)
         if not result:
             return jres(UserModels.failure(message="Clouldn't log out"), 200)
         response = UserModels.success(
@@ -153,20 +151,22 @@ class UserController:
         return jres(response, 200)
 
     @action(name="sessionValid", renderer="json", request_method="GET")
-    def session_valid(self):
-        phone_number = self.request.matchdict[tg_data.phone][1:]
-        wrap = cloudygram_api_server.get_tt()
-        result = self.pool.submit(
+    def session_valid_req(self):
+        phone_number = self.request.matchdict[telegram_keys.phone_number][1:]
+        try:
+            result = self.pool.submit(
                 asyncio.run,
-                wrap.session_valid(phone_number)
-                ).result()
+                session_valid(phone_number)
+            ).result()
+        except self.expected_errors as exc:
+            return self.handle_exceptions(exc)
         if result:
             response = UserModels.success(
-                    message="Session is still valid."
-                    )
+                message="Session is still valid."
+            )
         else:
             response = UserModels.failure(
-                    message="Session is not valid."
-                    )
+                message="Session is not valid."
+            )
         return jres(response, 200)
 
