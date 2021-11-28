@@ -91,13 +91,16 @@ class UserController:
     @action(name="downloadProfilePhoto", renderer="json", request_method="GET")
     def download_profile_photo_req(self):
         phone_number = self.request.matchdict[telegram_keys.phone_number][1:]
-        path: str = ""
+        filepath: str = ""
+        filename: str = ""
         if file_keys.path in self.request.GET:
-            path = self.request.GET[file_keys.path]
+            filepath = self.request.GET[file_keys.path]
+        if file_keys.filename in self.request.GET:
+            filename = self.request.GET[file_keys.filename]
         try:
             result = self.pool.submit(
                 asyncio.run,
-                download_profile_photo(phone_number, path)
+                download_profile_photo(phone_number, filepath, filename)
             ).result()
         except self.expected_errors as exc:
             return self.handle_exceptions(exc)
