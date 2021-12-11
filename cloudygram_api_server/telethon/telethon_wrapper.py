@@ -209,7 +209,7 @@ async def get_contacts(phone_number: str) -> str:
     return result.stringify()
 
 
-async def delete_messages(self, phone_number: str, message_ids: List[str]):
+async def delete_messages(phone_number: str, message_ids: List[str]):
     client = await self.connect(phone_number)
     await client.delete_messages(InputUserSelf(), message_ids)
     await client.disconnect()
