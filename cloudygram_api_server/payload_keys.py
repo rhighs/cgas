@@ -13,5 +13,6 @@ telegram_keys.phone_code = "phoneCode"
 file_keys.mime_type= "mimeType"
 file_keys.path = "path"
 file_keys.name = "file"
+file_keys.filename = "filename"
 
 download_keys.message = "message"

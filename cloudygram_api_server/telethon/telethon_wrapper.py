@@ -172,15 +172,17 @@ async def download_file(phone_number: str, message_json: str, file_path: str) ->
     return False, message_json
 
 
-async def download_profile_photo(phone_number: str, file_path: str = None) -> bool:
+async def download_profile_photo(phone_number: str, filepath: str = None, filename: str = None) -> bool:
     async with Client(phone_number) as client:
         me: User = await client.get_me()
-        if file_path != None:
-            file_path += me.username
-        if os.path.exists(file_path): #this helps avoiding duplicate files
-            os.remove(file_path)
-        download_path = await client.download_profile_photo(InputUserSelf(), file=file_path)
-    return download_path == file_path
+        if filepath != None and filename is None:
+            filepath += me.username
+        elif filepath != None and filename is not None:
+            filepath += filename
+        if os.path.exists(filepath): #this helps avoiding duplicate files
+            os.remove(filepath)
+        download_path = await client.download_profile_photo(InputUserSelf(), file=filepath)
+    return download_path == filepath
 
 
 async def get_messages(phone_number: str) -> List:
@@ -205,6 +207,12 @@ async def get_contacts(phone_number: str) -> str:
             hash=0
         ))
     return result.stringify()
+
+
+async def delete_messages(self, phone_number: str, message_ids: List[str]):
+    client = await self.connect(phone_number)
+    await client.delete_messages(InputUserSelf(), message_ids)
+    await client.disconnect()
 
 
 async def file_refresh(client_instance: TelegramClient, message_id: int) -> bytes:
