@@ -209,12 +209,7 @@ async def get_contacts(phone_number: str) -> str:
     return result.stringify()
 
 
-async def delete_messages(phone_number: str, message_ids: List[str]):
-    client = await self.connect(phone_number)
-    await client.delete_messages(InputUserSelf(), message_ids)
-    await client.disconnect()
-
-
 async def file_refresh(client_instance: TelegramClient, message_id: int) -> bytes:
     async for m in client_instance.iter_messages(InputUserSelf(), ids=message_id):
         return m.media.document.file_reference
+
