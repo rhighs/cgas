@@ -24,6 +24,20 @@ def init_telethon(api_id: str, api_hash: str, workdir: str = "sessions"):
     WORKDIR = os.path.join(os.getcwd(), workdir)
 
 
+class CgDownloadResult():
+
+    def __init__(self, message_json, has_ref_changed):
+        if has_ref_changed:
+            self.message_id = get_message_id(message_json)
+        self.message_json = message_json
+        self.has_ref_changed = has_ref_changed
+
+    def dict(self):
+        if self.has_ref_changed:
+            return { "messageId": self.message_id, "hasRefChanged": self.has_ref_changed, "message": self.message_json }
+        return { "hasRefChanged": self.has_ref_changed, "message": self.message_json }
+
+
 class Client:
 
     def __init__(self, phone_number: str, check_auth: bool = True):
@@ -152,7 +166,7 @@ async def upload_file(phone_number: str, file_name: str, file_stream: BytesIO, m
     return updates.to_json()
 
 
-async def download_file(phone_number: str, message_json: str, file_path: str) -> Tuple[dict, bool]:
+async def download_file(phone_number: str, message_json: str, file_path: str) -> CgDownloadResult:
     async with Client(phone_number) as client:
         media: MessageMediaDocument = parse_updates(message_json)
         message_id = get_message_id(message_json)
@@ -168,8 +182,8 @@ async def download_file(phone_number: str, message_json: str, file_path: str) ->
             ref: bytes = await file_refresh(client, message_id)
             media.document.file_reference = ref
             await try_download()
-            return True, with_new_ref(message_json, ref)
-    return False, message_json
+            return CgDownloadResult(with_new_ref(message_json, ref), True)
+        return CgDownloadResult(message_json, False)
 
 
 async def download_profile_photo(phone_number: str, filepath: str = None, filename: str = None) -> bool:
