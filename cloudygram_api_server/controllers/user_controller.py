@@ -69,7 +69,7 @@ class UserController:
             ).result()
         except self.expected_errors as exc:
             return self.handle_exceptions(exc)
-        return jres(result, 200)
+        return jres(result.dict(), 200)
 
     @action(name="isAuthorized", renderer="json", request_method="GET")
     def is_authorized_req(self):
