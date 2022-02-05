@@ -1,3 +1,5 @@
+workspace*
+.TelegramAPI/
 keys.json
 *.session
 .vscode/
