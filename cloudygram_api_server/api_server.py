@@ -1,3 +1,5 @@
+from distutils.log import debug
+import imp
 from cloudygram_api_server.controllers import HomeController, UserController, MessagesController
 from cloudygram_api_server.telethon.telethon_wrapper import init_telethon
 from wsgiref.simple_server import make_server
@@ -20,5 +22,6 @@ class ApiServer:
     
     def run(self):
         pyramid_app = configure(settings=None)
-        server = make_server(self.host_ip, self.port, app=pyramid_app)
-        server.serve_forever()
+        with make_server(self.host_ip, self.port, app=pyramid_app) as server:
+            print("Server start...")
+            server.serve_forever()
