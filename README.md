@@ -1,6 +1,6 @@
 ## What's this
 Cloudygram-api-server is a basic web server which sole purpose is to serve telethon's basic functionalities.
-this way any desired programming language gains access to MTProto Telegram's features, via a fast and reliable python module.
+Think of it as a microservice with a much bigger picture in mind.
 
 For more info about telethon visit [telethon's repo.](https://github.com/LonamiWebs/Telethon)
 
@@ -13,7 +13,7 @@ $ mkdir sessions
 $ python3 main.py
 ```
 
-Before actually running the application make sure to create a keys.json file in the root folder, containing the following:
+Before actually running the application make sure to create a keys.json file in the project root, containing the following:
 ```json
 {
     "api_id": <your_api_id>,
@@ -55,12 +55,8 @@ Just a simple GET request
 js example:
 ```js
 const url = "http://127.0.0.1:5000/user/+393421323295/userInfo";
-const get_user_info = async (url) => {
-    return await fetch(url, { method: "GET" })
-        .then(async res => {
-            return await res.json();
-        });
-}
+const get_user_info = (url) => fetch(url, { method: "GET" })
+                           .then(res => res.json());
 
 console.log(await get_user_info(url));
 
@@ -104,7 +100,7 @@ yourself into annoying errors, I've provided two api calls in which you can chec
 state of a session, and eventually clean all the non-valid sessions handled by the server.
 To do this you can use the following resources.
 
-`GET /user/<international_formatted_number>/sessionValid` "is this specific session valid?".\
+`GET /user/<international_formatted_number>/sessionValid` "is this session valid?".\
 `DELETE /cleanSessions` deletes all non-valid sessions.
 
 These resources always return a json object with a bool field `isSuccess`.
