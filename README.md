@@ -55,7 +55,7 @@ Just a simple GET request
 js example:
 ```js
 const url = "http://127.0.0.1:5000/user/+393421323295/userInfo";
-const get_user_info = (url) => fetch(url, { method: "GET" })
+const getUserInfo = (url) => fetch(url, { method: "GET" })
                            .then(res => res.json());
 
 console.log(await get_user_info(url));
