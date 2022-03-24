@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "cgas"
+version = "0.1.2"
+description = "HTTP API serving Telethon features"
+authors = ["Roberto Montalti <roberto.montalti00@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.7"
+pyramid = "2.0"
+pyramid_handlers = "0.5"
+telethon = "^1.24"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

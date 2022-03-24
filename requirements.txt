@@ -1,4 +1,0 @@
-pyramid
-pyramid_handlers
-telethon
-TgCrypto
