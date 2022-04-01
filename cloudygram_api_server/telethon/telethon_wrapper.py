@@ -94,12 +94,19 @@ async def send_code(phone_number: str) -> str:
     return code.phone_code_hash
 
 
-async def signin(phone_number: str, phone_code_hash: str, phone_code: str) -> User:
+async def signin(phone_number: str, phone_code_hash: str, phone_code: str, phone_password: str) -> User:
     async with Client(phone_number, check_auth=False) as client:
         try:
             result: User = await client.sign_in(phone_number, phone_code, phone_code_hash=phone_code_hash)
         except Exception as e:
-            raise TTSignInException(str(e))
+            message = TTSignInException(str(e))
+            try:
+                if (message.args[0] == "Two-steps verification is enabled and a password is required (caused by SignInRequest)"):
+                    result: User = await client.sign_in(phone_number, password=phone_password)
+                else:
+                    raise TTSignInException(str(e))
+            except Exception as e:
+                raise TTSignInException(str(e))
     return result  #of type User
 
 

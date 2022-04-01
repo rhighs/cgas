@@ -9,6 +9,7 @@ telegram_keys.phone_number = "phoneNumber"
 telegram_keys.first_name = "firstName"
 telegram_keys.last_name = "lastName"
 telegram_keys.phone_code = "phoneCode"
+telegram_keys.phone_password = "password"
 
 file_keys.mime_type= "mimeType"
 file_keys.path = "path"
