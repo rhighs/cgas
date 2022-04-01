@@ -1,12 +1,13 @@
-from cloudygram_api_server.telethon.exceptions import TTUnathorizedException, TTGenericException, TTSignInException, TTFileTransferException
+from cloudygram_api_server.telethon.exceptions import TTNeeds2FAException, TTUnathorizedException, TTGenericException, TTSignInException, TTFileTransferException
 from telethon.tl.types import Message, MessageMediaDocument, DocumentAttributeFilename, UpdateShortMessage
 from telethon.tl.types import User, InputPeerChat, InputUserSelf
 from telethon.tl.types.messages import AffectedMessages
+from telethon.errors import SessionPasswordNeededError
 from telethon.tl.types.auth import SentCode
 from telethon.tl import functions, types
 from telethon import TelegramClient
 from .parser import parse_updates, get_message_id, with_new_ref
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 from pathlib import Path
 from io import BytesIO
 import os
@@ -94,10 +95,12 @@ async def send_code(phone_number: str) -> str:
     return code.phone_code_hash
 
 
-async def signin(phone_number: str, phone_code_hash: str, phone_code: str) -> User:
+async def signin(phone_number: str, phone_code_hash: str, phone_code: str, password: Optional[str] = None) -> User:
     async with Client(phone_number, check_auth=False) as client:
         try:
-            result: User = await client.sign_in(phone_number, phone_code, phone_code_hash=phone_code_hash)
+            result: User = await client.sign_in(phone_number, phone_code, phone_code_hash=phone_code_hash, password=password)
+        except SessionPasswordNeededError:
+            raise TTNeeds2FAException()
         except Exception as e:
             raise TTSignInException(str(e))
     return result  #of type User

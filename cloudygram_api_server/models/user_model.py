@@ -33,6 +33,16 @@ class UserModels:
         return DEFAULT_FAILURE
 
     @staticmethod
+    def needs2FA(message: str):
+        return {
+            SUCCESS_KEY: False,
+            MESSAGE_KEY: message,
+            DATA_KEY: {
+                "needs2fa": True
+            }
+        }
+
+    @staticmethod
     def userDetails(userDetails: User) -> dict:
         return {
             SUCCESS_KEY: True,

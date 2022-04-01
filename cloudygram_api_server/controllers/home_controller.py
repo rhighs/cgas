@@ -7,6 +7,7 @@ from cloudygram_api_server.telethon.exceptions import TTUnathorizedException
 from pyramid_handlers import action
 from pyramid.request import Request
 from typing import Union
+from http import HTTPStatus
 import concurrent.futures
 import asyncio
 
@@ -20,11 +21,13 @@ class HomeController(object):
 
     def handle_exceptions(self, exception: Union[TTGenericException, TTUnathorizedException, Exception]) -> dict:
         if type(exception) is TTGenericException or type(exception) is Exception:
-            return jres(HomeModels.failure(str(exception)), status=500)
+            return jres(HomeModels.failure(str(exception)), status=HTTPStatus.INTERNAL_SERVER_ERROR)
         elif type(exception) is TTUnathorizedException:
-            return jres(HomeModels.failure(str(exception)), status=401)
+            return jres(HomeModels.failure(str(exception)), status=HTTPStatus.UNAUTHORIZED)
+        elif type(exception) is TTNeeds2FAException:
+            return jres(UserModels.needs2FA(str(exception)), status=HTTPStatus.UNAUTHORIZED)
         else:
-            return jres(HomeModels.failure(str(exception)), status=500)
+            return jres(HomeModels.failure(str(exception)), status=HTTPStatus.INTERNAL_SERVER_ERROR)
 
     @action(name="sendCode", renderer="json", request_method="GET")
     def send_code_req(self):
@@ -36,7 +39,7 @@ class HomeController(object):
                     ).result()
         except self.expected_errors as exc:
             return self.handle_exceptions(exc)
-        return jres(HomeModels.sent_code(result), 200)
+        return jres(HomeModels.sent_code(result), HTTPStatus.OK)
 
     @action(name="signin", renderer="json", request_method="POST")
     def signin_req(self):
@@ -44,18 +47,20 @@ class HomeController(object):
         phone_number = body[telegram_keys.phone_number][1:]
         phone_code_hash = body[telegram_keys.phone_code_hash]
         phone_code = body[telegram_keys.phone_code]
+        password = body[telegram_keys.password]
         try:
             result = self.pool.submit(
                     asyncio.run,
                     signin(
                         phone_number,
                         phone_code_hash,
-                        phone_code
+                        phone_code,
+                        password
                         )
                     ).result()
         except self.expected_errors as exc:
             return self.handle_exceptions(exc)
-        return jres(UserModels.userDetails(result), 200)
+        return jres(UserModels.userDetails(result), HTTPStatus.OK)
 
     @action(name="qrLogin", renderer="json", request_method="GET")
     def qr_login_req(self):
@@ -68,7 +73,7 @@ class HomeController(object):
         except self.expected_errors as exc:
             return self.handle_exceptions(exc)
         self.pool.submit(asyncio.run, result.wait())
-        return jres(UserModels.success(data=result.url), 200)
+        return jres(UserModels.success(data=result.url), HTTPStatus.OK)
 
     @action(name="singup", renderer="json", request_method="POST")
     def sign_up_req(self):
@@ -91,7 +96,7 @@ class HomeController(object):
                 ).result()
         except self.expected_errors as exc:
             return self.handle_exceptions(exc)
-        return jres(UserModels.userDetails(result), 200)
+        return jres(UserModels.userDetails(result), HTTPStatus.OK)
 
     @action(name="cleanSessions", renderer="json", request_method="DELETE")
     def clean_req(self):
