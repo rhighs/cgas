@@ -5,7 +5,8 @@
 #include <curl/curl.h>
 #include <json/json.h>
 
-#define u32 std::uint32_t
+typedef std::uint32_t u32;
+typedef std::tuple<bool, std::string> CodeRes;
 
 namespace test_auth {
     static std::string url("http://localhost:5000");
@@ -49,14 +50,12 @@ namespace test_auth {
         curl_easy_setopt(curl, CURLOPT_VERBOSE, verbose_curl);
     }
 
-#define code_res std::tuple<bool, std::string>
-
-    static code_res get_code(std::string phone_number) {
+    static CodeRes get_code(std::string phone_number) {
         init();
         std::string req_string("/sendCode?phoneNumber=" + phone_number);
         init_curl_GET(url+req_string);
 
-        code_res def = { false, std::string() };
+        CodeRes def = { false, std::string() };
         auto res = curl_easy_perform(curl);
 
         if(res != CURLE_OK) return def;
