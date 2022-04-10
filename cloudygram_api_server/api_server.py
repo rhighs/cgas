@@ -20,5 +20,7 @@ class ApiServer:
     
     def run(self):
         pyramid_app = configure(settings=None)
-        server = make_server(self.host_ip, self.port, app=pyramid_app)
-        server.serve_forever()
+        with make_server(self.host_ip, self.port, app=pyramid_app) as server:
+            print("Server start...")
+            print("Serving at", str(self.host_ip) + ":" + str(self.port))
+            server.serve_forever()

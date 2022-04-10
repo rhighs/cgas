@@ -47,7 +47,7 @@ class HomeController(object):
         phone_number = body[telegram_keys.phone_number][1:]
         phone_code_hash = body[telegram_keys.phone_code_hash]
         phone_code = body[telegram_keys.phone_code]
-        password = body[telegram_keys.password]
+        phone_password = body[telegram_keys.phone_password]
         try:
             result = self.pool.submit(
                     asyncio.run,
@@ -55,7 +55,7 @@ class HomeController(object):
                         phone_number,
                         phone_code_hash,
                         phone_code,
-                        password
+                        phone_password
                         )
                     ).result()
         except self.expected_errors as exc:
