@@ -23,7 +23,6 @@ Before actually running the application make sure to create a keys.json file in 
 To get your api keys simply go to [my.telegram.org](https://my.telegram.org/auth?to=apps)
 
 # Getting started
-When running the server for the first time, make sure to create a sessions/ folder in the project root directory, this is where telethon will place all the session files for each account you are going to log in.
 
 ## Receive a code
 Path: `/sendCode?phoneNumber=<international_formatted_number>`\
@@ -43,7 +42,8 @@ All you need to do now is calling via the api via POST method, passing a json bo
 {
     "phoneNumber": "<international_formatted_number>",
     "phoneCode": "<the_received_code>",
-    "phoneCodeHash": "<from_the_previous_request>"
+    "phoneCodeHash": "<from_the_previous_request>",
+    "password": "<2FA_password>|<empty>"
 }
 ```
 If everything ran smoothly you will receive a positive response and a telegram notification, telling you successfully logged via the cloudygram-api-server.
