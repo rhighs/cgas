@@ -1,12 +1,10 @@
 ## What's this
-Cloudygram-api-server is a basic web server which sole purpose is to serve telethon's basic functionalities.
+Cloudygram-api-server is a basic web server which sole purpose is to serve https://cloudygram.com basic functionalities.
 this way any desired programming language gains access to MTProto Telegram's features, via a fast and reliable python module.
-
-For more info about telethon visit [telethon's repo.](https://github.com/LonamiWebs/Telethon)
 
 ## Cloning and running
 ```bash
-$ git clone https://github.com/skurob/cloudygram-api-server
+$ git clone https://github.com/Maverick1983/cloudygram-api-server
 $ cd cloudygram-api-server
 $ pip3 install -r requirements.txt
 $ mkdir sessions
