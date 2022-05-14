@@ -44,10 +44,16 @@ class UserController:
         file_stream = self.request.POST[file_keys.name].file
         file_name = self.request.POST[file_keys.name].filename
         mime_type = self.request.POST[file_keys.mime_type]
+        
+        if telegram_keys.chatid in self.request.POST:
+            chatid = self.request.POST[telegram_keys.chatid]
+        else:
+            chatid = 0
+
         try:
             result = self.pool.submit(
                 asyncio.run,
-                upload_file(phone_number, file_name, file_stream, mime_type)
+                upload_file(phone_number, file_name, file_stream, mime_type, chatid)
             ).result()
         except self.expected_errors as exc:
             return self.handle_exceptions(exc)
@@ -170,3 +176,33 @@ class UserController:
             )
         return jres(response, 200)
 
+    @action(name="uploadFilePath", renderer="json", request_method="POST")
+    def upload_file_path(self):
+        phone_number = self.request.matchdict[telegram_keys.phone_number][1:]
+        file_stream = self.request.POST[file_keys.path]
+        file_name = self.request.POST[file_keys.filename]
+        mime_type = self.request.POST[file_keys.mime_type]
+        try:
+            result = self.pool.submit(
+                asyncio.run,
+                upload_file_path(phone_number, file_name, file_stream, mime_type)
+            ).result()
+        except self.expected_errors as exc:
+            return self.handle_exceptions(exc)
+        return jres(result, 200)
+
+    @action(name="dialogs", renderer="json", request_method="GET")
+    def contacts_req(self):
+        phone_number = self.request.matchdict[telegram_keys.phone_number][1:]
+        try:
+            result = self.pool.submit(
+                asyncio.run,
+                get_dialog(phone_number)
+            ).result()
+        except self.expected_errors as exc:
+            return self.handle_exceptions(exc)
+        response = UserModels.success(
+            message="Ok",
+            data=result
+        )
+        return result

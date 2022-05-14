@@ -1,6 +1,7 @@
+from asyncio.windows_events import NULL
 from cloudygram_api_server.telethon.exceptions import TTUnathorizedException, TTGenericException, TTSignInException, TTFileTransferException
 from telethon.tl.types import Message, MessageMediaDocument, DocumentAttributeFilename, UpdateShortMessage
-from telethon.tl.types import User, InputPeerChat, InputUserSelf
+from telethon.tl.types import User, InputPeerChat, InputUserSelf, PeerChat, PeerChannel
 from telethon.tl.types.messages import AffectedMessages
 from telethon.tl.types.auth import SentCode
 from telethon.tl import functions, types
@@ -144,32 +145,41 @@ async def get_me(phone_number: str) -> User:
     return result
 
 
-async def upload_file(phone_number: str, file_name: str, file_stream: BytesIO, mime_type: str):
+async def upload_file(phone_number: str, file_name: str, file_stream: BytesIO, mime_type: str, chatid: int = 0):
     async with Client(phone_number) as client:
-        uploaded_file = await client.upload_file(file=file_stream)
-        me: User = await client.get_me()
-        media = types.InputMediaUploadedDocument(
-            file=uploaded_file,
-            stickers=[types.InputDocument(
-                id=uploaded_file.id,
-                access_hash=uploaded_file.id,
-                file_reference=INITIAL_FILE_REF
-            )],
-            ttl_seconds=100,
-            mime_type=mime_type,
-            attributes=[
-                DocumentAttributeFilename(file_name)
-            ]
-        )
+        if (chatid == 0):
+            uploaded_file = await client.upload_file(file=file_stream)
+        
+            me: User = await client.get_me()
 
-        try:
-            updates: UpdateShortMessage = await client(functions.messages.SendMediaRequest(
-                peer=me,
-                media=media,
-                message="document id: " + str(media.stickers[0].id)
-            ))
-        except Exception as e:
-            raise TTFileTransferException(str(e))
+            media = types.InputMediaUploadedDocument(
+                file=uploaded_file,
+                stickers=[types.InputDocument(
+                    id=uploaded_file.id,
+                    access_hash=uploaded_file.id,
+                    file_reference=INITIAL_FILE_REF
+                )],
+                ttl_seconds=100,
+                mime_type=mime_type,
+                attributes=[
+                    DocumentAttributeFilename(file_name)
+                ]
+            )
+
+            try:
+                updates: UpdateShortMessage = await client(functions.messages.SendMediaRequest(
+                    peer=me,
+                    media=media,
+                    message="document id: " + str(media.stickers[0].id)
+                ))
+            except Exception as e:
+                raise TTFileTransferException(str(e))
+        else:
+            try:
+                updates: Message = await client.send_file(entity = int(chatid), file=file_stream, attributes=[DocumentAttributeFilename(file_name)])
+            except Exception as e:
+                raise TTFileTransferException(str(e))
+
     return updates.to_json()
 
 
@@ -234,3 +244,39 @@ async def file_refresh(client_instance: TelegramClient, message_id: int) -> byte
     async for m in client_instance.iter_messages(InputUserSelf(), ids=message_id):
         return m.media.document.file_reference
 
+
+async def upload_file_path(phone_number: str, file_name: str, file_stream: str, mime_type: str):
+    async with Client(phone_number) as client:
+        uploaded_file = await client.upload_file(file=file_stream)
+        me: User = await client.get_me()
+        media = types.InputMediaUploadedDocument(
+            file=uploaded_file,
+            stickers=[types.InputDocument(
+                id=uploaded_file.id,
+                access_hash=uploaded_file.id,
+                file_reference=INITIAL_FILE_REF
+            )],
+            ttl_seconds=100,
+            mime_type=mime_type,
+            attributes=[
+                DocumentAttributeFilename(file_name)
+            ]
+        )
+
+        try:
+            updates: UpdateShortMessage = await client(functions.messages.SendMediaRequest(
+                peer=me,
+                media=media,
+                message="document id: " + str(media.stickers[0].id)
+            ))
+        except Exception as e:
+            raise TTFileTransferException(str(e))
+    return updates.to_json()
+
+async def get_dialog(phone_number: str) -> str:
+    async with Client(phone_number) as client:
+        if (await client.get_me()).bot:
+            await client.disconnect()
+            raise TTUnathorizedException()
+        result = await client.get_dialogs()
+    return result
