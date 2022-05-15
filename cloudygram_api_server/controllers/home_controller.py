@@ -102,4 +102,3 @@ class HomeController(object):
     def clean_req(self):
         clean()
         return HomeModels.success("Unused sessions cleaned.")
-

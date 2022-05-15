@@ -1,4 +1,7 @@
+from email.policy import HTTP
+from http import HTTPStatus
 from cloudygram_api_server.payload_keys import telegram_keys, download_keys, file_keys
+from cloudygram_api_server.telethon.parser import document_to_input_document_file_location
 from cloudygram_api_server.telethon.telethon_wrapper import *
 from cloudygram_api_server.models import UserModels
 from cloudygram_api_server.scripts import jres
@@ -7,6 +10,7 @@ from pyramid.request import Request
 from typing import Union
 import concurrent.futures
 import asyncio
+import math
 import json
 
 
@@ -170,3 +174,49 @@ class UserController:
             )
         return jres(response, 200)
 
+    @action(name="streamContent", renderer="json", request_method="POST")
+    def stream_content_req(self):
+        phone_number = self.request.matchdict[telegram_keys.phone_number][1:]
+        message_json = self.request.json_body[download_keys.message]
+        file = parse_updates(message_json).ducument
+        file_location = document_to_input_document_file_location(file)
+
+        def chunk_size(length):
+            return 2 ** max(min(math.ceil(math.log2(length / 1024)), 10), 2) * 1024
+
+        def offset_fix(offset, chunksize):
+            offset -= offset % chunksize
+            return offset
+
+        if "Range" in self.request.headers:
+            range_header = self.request.headers["Range"]
+            from_bytes, until_bytes = range_header.replace("bytes=", "").split("-")
+            from_bytes = int(from_bytes)
+            until_bytes = int(until_bytes) if until_bytes else file.size - 1
+        else:
+            return jres(UserModels.failure("Range header not present or invalid"), HTTPStatus.BAD_REQUEST)
+
+        req_length = until_bytes - from_bytes
+        chunk_size = chunk_size(req_length)
+        offset = offset_fix(from_bytes, chunk_size)
+        first_part_cut = from_bytes - offset
+        last_part_cut = (until_bytes % chunk_size) + 1
+        part_count = math.ceil(req_length / chunk_size)
+
+        response = self.request.response
+        response.content_type = "application/octet-stream"
+        response.headers["Range"] = f"bytes={from_bytes}-{until_bytes}"
+        response.headers["Content-Range"] = f"bytes {from_bytes}-{until_bytes}/{file.size}"
+        response.headers["Content-Disposition"] = f"attachment; filename=\"{file.name}\""
+        response.headers["Accept-Ranges"] = "bytes"
+
+        try: 
+            result = self.pool.submit(
+                asyncio.run,
+                yield_file_sync(phone_number, file_location, from_bytes, first_part_cut, last_part_cut, part_count)
+            )
+        except:
+            pass
+
+        response.file_iter = result
+        return response

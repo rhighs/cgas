@@ -1,4 +1,5 @@
-from telethon.tl.types import MessageMediaDocument, Document
+from os import access
+from telethon.tl.types import MessageMediaDocument, Document, InputDocumentFileLocation
 from base64 import encodebytes, decodebytes
 from typing import Union
 import json
@@ -62,6 +63,14 @@ def get_message_id(message_dict: dict) -> int:
 def with_new_ref(message_dict: dict, ref: bytes) -> dict:
     message_dict["updates"][1]["message"]["media"]["document"]["file_reference"] = encodebytes(ref).decode()
     return message_dict
+
+def document_to_input_document_file_location(document: Document) -> InputDocumentFileLocation:
+    return InputDocumentFileLocation(
+        id=document.id,
+        access_hash=document.access_hash,
+        file_reference=document.file_reference,
+        thumb_size=document.thumb_size
+    )
 
 """
 I'll leave this here in case of future implementations, i know it's something

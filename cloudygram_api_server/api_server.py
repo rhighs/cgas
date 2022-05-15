@@ -2,6 +2,7 @@ from cloudygram_api_server.controllers import HomeController, UserController, Me
 from cloudygram_api_server.telethon.telethon_wrapper import init_telethon
 from wsgiref.simple_server import make_server
 from pyramid.config import Configurator
+from asgiref.wsgi import WsgiToAsgi
 
 def configure(**settings):
     with Configurator(settings=settings) as config:
@@ -24,3 +25,8 @@ class ApiServer:
             print("Server start...")
             print("Serving at", str(self.host_ip) + ":" + str(self.port))
             server.serve_forever()
+
+    def create_asgi_app(self) -> WsgiToAsgi:
+        wsgi_app = configure(settings=None)
+        return WsgiToAsgi(wsgi_app)
+

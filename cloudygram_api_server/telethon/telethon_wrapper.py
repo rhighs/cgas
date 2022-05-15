@@ -1,13 +1,13 @@
 from cloudygram_api_server.telethon.exceptions import TTNeeds2FAException, TTUnathorizedException, TTGenericException, TTSignInException, TTFileTransferException
 from telethon.tl.types import Message, MessageMediaDocument, DocumentAttributeFilename, UpdateShortMessage
-from telethon.tl.types import User, InputPeerChat, InputUserSelf
+from telethon.tl.types import User, InputPeerChat, InputUserSelf, InputDocumentFileLocation 
 from telethon.tl.types.messages import AffectedMessages
 from telethon.errors import SessionPasswordNeededError
 from telethon.tl.types.auth import SentCode
 from telethon.tl import functions, types
 from telethon import TelegramClient
 from .parser import parse_updates, get_message_id, with_new_ref
-from typing import List, Tuple, Optional
+from typing import List, Union, Tuple, Optional
 from pathlib import Path
 from io import BytesIO
 import os
@@ -232,8 +232,115 @@ async def get_contacts(phone_number: str) -> str:
         ))
     return result.stringify()
 
+async def yield_file(
+    phone_number:str,
+    file_location: InputDocumentFileLocation,
+    offset: int,
+    first_part_cut: int,
+    last_part_cut: int,
+    part_count: int,
+    chunk_size: int
+    ) -> Union[str, None]:
 
+    async with Client(phone_number) as client:
+        try:
+            file_part = await client(functions.upload.GetFileRequest(
+                file_location,
+                offset=offset,
+                limit=chunk_size
+            ))
+
+            current_part = 0
+
+            while current_part < part_count:
+                chunk = file_part.bytes
+                offset += chunk_size
+
+                if not chunk:
+                    break
+
+                if part_count == 1:
+                    yield chunk[first_part_cut:last_part_cut]
+                    break
+
+                if current_part == 0:
+                    yield chunk[first_part_cut:]
+                    break
+
+                if 1 < current_part <= part_count:
+                    yield chunk
+
+                file_part = await client(functions.upload.GetFileRequest(
+                    file_location,
+                    offset=offset,
+                    limit=chunk_size
+                ))
+
+                current_part += 1
+
+        except Exception as exc:
+            # Handle exception
+            pass
+        finally: 
+            # Do some logging
+            pass
+
+def yield_file_sync(
+    phone_number:str,
+    file_location: InputDocumentFileLocation,
+    offset: int,
+    first_part_cut: int,
+    last_part_cut: int,
+    part_count: int,
+    chunk_size: int
+    ) -> Union[str, None]:
+
+    import asyncio
+
+    client = asyncio.run(Client(phone_number))
+    try:
+        file_part = asyncio.run(client(functions.upload.GetFileRequest(
+            file_location,
+            offset=offset,
+            limit=chunk_size
+        )))
+
+        current_part = 0
+
+        while current_part < part_count:
+            chunk = file_part.bytes
+            offset += chunk_size
+
+            if not chunk:
+                break
+
+            if part_count == 1:
+                yield chunk[first_part_cut:last_part_cut]
+                break
+
+            if current_part == 0:
+                yield chunk[first_part_cut:]
+                break
+
+            if 1 < current_part <= part_count:
+                yield chunk
+
+            file_part = asyncio.run(client(functions.upload.GetFileRequest(
+                file_location,
+                offset=offset,
+                limit=chunk_size
+            )))
+
+            current_part += 1
+            client.disconnect()
+
+    except Exception as exc:
+        # Handle exception
+        pass
+    finally: 
+        # Do some logging
+        pass
+        
 async def file_refresh(client_instance: TelegramClient, message_id: int) -> bytes:
     async for m in client_instance.iter_messages(InputUserSelf(), ids=message_id):
         return m.media.document.file_reference
-
