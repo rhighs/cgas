@@ -56,7 +56,6 @@ class UserController:
                 upload_file(phone_number, file_name, file_stream, mime_type, chatid)
             ).result()
         except self.expected_errors as exc:
-            print("errore upload_file_req")
             return self.handle_exceptions(exc)
         return jres(result, 200)
 

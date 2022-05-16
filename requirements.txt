@@ -2,3 +2,4 @@ pyramid
 pyramid_handlers
 telethon
 TgCrypto
+mime-support
