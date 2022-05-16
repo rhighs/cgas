@@ -14,6 +14,8 @@ from pathlib import Path
 from io import BytesIO
 import os
 from cloudygram_api_server.scripts.utilities import Progress
+import traceback
+import sys
 
 WORKDIR = ""
 API_ID = ""
@@ -184,7 +186,7 @@ async def upload_file(phone_number: str, file_name: str, file_stream: BytesIO, m
                         attributes=[DocumentAttributeFilename(file_name)],
                         progress_callback=Progress.callbackUpload)
             except Exception as e:
-                print ("errore send_file " + str(e))
+                traceback.print_exception(sys.exc_info())
                 raise TTFileTransferException(str(e))
 
     return updates.to_json()
