@@ -1,3 +1,5 @@
+from gc import callbacks
+import imp
 from cloudygram_api_server.telethon.exceptions import TTUnathorizedException, TTGenericException, TTSignInException, TTFileTransferException
 from telethon.tl.types import Message, MessageMediaDocument, DocumentAttributeFilename, UpdateShortMessage
 from telethon.tl.types import User, InputPeerChat, InputUserSelf, PeerChat, PeerChannel
@@ -10,6 +12,7 @@ from typing import List, Tuple
 from pathlib import Path
 from io import BytesIO
 import os
+from cloudygram_api_server.scripts.utilities import Progress
 
 WORKDIR = ""
 API_ID = ""
@@ -175,7 +178,10 @@ async def upload_file(phone_number: str, file_name: str, file_stream: BytesIO, m
                 raise TTFileTransferException(str(e))
         else:
             try:
-                updates: Message = await client.send_file(entity = int(chatid), file=file_stream, attributes=[DocumentAttributeFilename(file_name)])
+                updates: Message = await client.send_file(entity = int(chatid), 
+                        file=file_stream, 
+                        attributes=[DocumentAttributeFilename(file_name)],
+                        progress_callback=Progress.callbackUpload)
             except Exception as e:
                 raise TTFileTransferException(str(e))
 

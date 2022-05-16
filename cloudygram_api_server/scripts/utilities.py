@@ -1,6 +1,6 @@
 from pyramid.response   import Response
 from telethon.tl.types  import Message
-import                  json
+import json
 
 def jres(model: dict, status: int) -> Response:
     jstr = json.dumps(model).replace("\\", "")
@@ -47,3 +47,8 @@ class CGMessage:
     def map_from_tt(t_message: Message) -> str:
         return json.loads(t_message.to_json()) #temporary need to correct metacharacters
 
+
+class Progress:
+    def callbackUpload(current, total):
+        print('Uploaded', current, 'out of', total,
+            'bytes: {:.2%}'.format(current / total))
