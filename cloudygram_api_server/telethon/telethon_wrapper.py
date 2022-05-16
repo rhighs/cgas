@@ -183,6 +183,7 @@ async def upload_file(phone_number: str, file_name: str, file_stream: BytesIO, m
                         attributes=[DocumentAttributeFilename(file_name)],
                         progress_callback=Progress.callbackUpload)
             except Exception as e:
+                print ("errore send_file")
                 raise TTFileTransferException(str(e))
 
     return updates.to_json()
