@@ -1,3 +1,5 @@
+from mimetypes import guess_extension
+import mimetypes
 from cloudygram_api_server.payload_keys import telegram_keys
 from cloudygram_api_server.telethon.telethon_wrapper import *
 from cloudygram_api_server.models import UserModels
@@ -100,3 +102,78 @@ class HomeController(object):
         clean()
         return HomeModels.success("Unused sessions cleaned.")
 
+
+        try:
+            result = self.pool.submit(
+                    asyncio.run,
+                    send_code(phone_number)
+                    ).result()
+        except self.expected_errors as exc:
+            return self.handle_exceptions(exc)
+        return jres(HomeModels.sent_code(result), 200)
+
+    @action(name="signin", renderer="json", request_method="POST")
+    def signin_req(self):
+        body = self.request.json_body
+        phone_number = body[telegram_keys.phone_number][1:]
+        phone_code_hash = body[telegram_keys.phone_code_hash]
+        phone_code = body[telegram_keys.phone_code]
+        phone_password = body[telegram_keys.phone_password]
+        try:
+            result = self.pool.submit(
+                    asyncio.run,
+                    signin(
+                        phone_number,
+                        phone_code_hash,
+                        phone_code,
+                        phone_password
+                        )
+                    ).result()
+        except self.expected_errors as exc:
+            return self.handle_exceptions(exc)
+        return jres(UserModels.userDetails(result), 200)
+
+    @action(name="qrLogin", renderer="json", request_method="GET")
+    def qr_login_req(self):
+        phone_number = self.request.GET[telegram_keys.phone_number]
+        try:
+            result = self.pool.submit(
+                    asyncio.run,
+                    qr_login(phone_number)
+                    ).result()
+        except self.expected_errors as exc:
+            return self.handle_exceptions(exc)
+        self.pool.submit(asyncio.run, result.wait())
+        return jres(UserModels.success(data=result.url), 200)
+
+    @action(name="singup", renderer="json", request_method="POST")
+    def sign_up_req(self):
+        body = self.request.json_body
+        phone_number = body[telegram_keys.phone_number]
+        first_name = body[telegram_keys.first_name]
+        last_name = body[telegram_keys.last_name]
+        phone_code = body[telegram_keys.phone_code]
+        phone_code_hash = body[telegram_keys.phone_code_hash]
+        try:
+            result = self.pool.submit(
+                    asyncio.run,
+                    signup(
+                        phone_number,
+                        phone_code,
+                        phone_code_hash,
+                        first_name,
+                        last_name
+                    )
+                ).result()
+        except self.expected_errors as exc:
+            return self.handle_exceptions(exc)
+        return jres(UserModels.userDetails(result), 200)
+
+    @action(name="mimetype", renderer="json", request_method="GET")
+    def mimetype_get(self):
+        file=self.request.GET["file"]
+        try:
+            result = mimetypes.guess_type(file)[0]
+        except Exception as e:
+                traceback.print_exc()
+        return result
