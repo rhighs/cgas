@@ -1,4 +1,3 @@
-from asyncio.windows_events import NULL
 from cloudygram_api_server.telethon.exceptions import TTUnathorizedException, TTGenericException, TTSignInException, TTFileTransferException
 from telethon.tl.types import Message, MessageMediaDocument, DocumentAttributeFilename, UpdateShortMessage
 from telethon.tl.types import User, InputPeerChat, InputUserSelf, PeerChat, PeerChannel
