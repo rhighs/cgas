@@ -4,6 +4,7 @@ from cloudygram_api_server.telethon.exceptions import TTUnathorizedException, TT
 from telethon.tl.types import Message, MessageMediaDocument, DocumentAttributeFilename, UpdateShortMessage
 from telethon.tl.types import User, InputPeerChat, InputUserSelf, PeerChat, PeerChannel
 from telethon.tl.types.messages import AffectedMessages
+import telethon.tl.custom
 from telethon.tl.types.auth import SentCode
 from telethon.tl import functions, types
 from telethon import TelegramClient
@@ -178,7 +179,7 @@ async def upload_file(phone_number: str, file_name: str, file_stream: BytesIO, m
                 raise TTFileTransferException(str(e))
         else:
             try:
-                updates: Message = await client.send_file(entity = int(chatid), 
+                updates: telethon.tl.custom.message.Message = await client.send_file(entity = int(chatid), 
                         file=file_stream, 
                         attributes=[DocumentAttributeFilename(file_name)],
                         progress_callback=Progress.callbackUpload)
