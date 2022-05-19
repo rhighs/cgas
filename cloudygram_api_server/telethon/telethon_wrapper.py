@@ -50,7 +50,7 @@ class Client:
         self.workdir = WORKDIR + "/" + phone_number
         self.phone_number = phone_number
         self.check_auth = check_auth
-        self.client = TelegramClient(api_id=API_ID, api_hash=API_HASH, session=self.workdir)
+        self.client = TelegramClient(self.workdir, API_ID, API_HASH)
 
     async def __aenter__(self):
         await self.client.connect()

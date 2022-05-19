@@ -37,6 +37,7 @@ class HomeController(object):
                     send_code(phone_number)
                     ).result()
         except self.expected_errors as exc:
+            traceback.print_exc()
             return self.handle_exceptions(exc)
         return jres(HomeModels.sent_code(result), 200)
 
@@ -174,6 +175,8 @@ class HomeController(object):
         file=self.request.GET["file"]
         try:
             result = mimetypes.guess_type(file)[0]
+            file = os.fspath(file)
+            print(file)
         except Exception as e:
                 traceback.print_exc()
         return result

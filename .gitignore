@@ -1,9 +1,11 @@
 workspace*
-.TelegramAPI/
+#for include /telethon/ folder inside virtuale env .Telegram
+.Telegram/
+##
 keys.json
 *.session
 .vscode/
-./example/test/
+./example/test
 todo.txt
 
 __pycache__/
@@ -21,7 +23,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
 lib64/
 parts/
 sdist/
