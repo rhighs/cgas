@@ -4,6 +4,7 @@ from cloudygram_api_server.controllers import HomeController, UserController, Me
 from cloudygram_api_server.telethon.telethon_wrapper import init_telethon
 from wsgiref.simple_server import make_server
 from pyramid.config import Configurator
+from telethon import __version__
 
 def configure(**settings):
     with Configurator(settings=settings) as config:
@@ -24,4 +25,5 @@ class ApiServer:
         pyramid_app = configure(settings=None)
         with make_server(self.host_ip, self.port, app=pyramid_app) as server:
             print("Server start...")
+            print("Version " + __version__)
             server.serve_forever()

@@ -177,6 +177,7 @@ class HomeController(object):
             result = mimetypes.guess_type(file)[0]
             file = os.fspath(file)
             print(file)
+            print(os.path.basename(file))
         except Exception as e:
                 traceback.print_exc()
         return result
