@@ -1,3 +1,4 @@
+import imp
 import sys
 import json
 from os import path
@@ -6,6 +7,7 @@ from cloudygram_api_server.telethon.telethon_wrapper import init_telethon
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from cloudygram_api_server.controllers import HomeController, UserController
+from telethon import __version__
 
 PATH = "keys.json"
 
@@ -27,6 +29,10 @@ app.include_router(
 def read_root():
     return {"Hello": "World"}
 
+@app.get("/version")
+def read_root():
+    return {"version": __version__}
+
 #@app.middleware("http")
 #async def add_process_time_header(request: Request, call_next):
 #    response = await call_next(request)
@@ -41,9 +47,6 @@ def startup():
         exit(1)
 
     init_telethon(data["api_id"], data["api_hash"])
-
-async def get_phone_number(phonenumber: str):
-    return phonenumber[1:]
 
 if __name__ == "__main__":
     startup()
