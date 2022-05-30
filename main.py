@@ -1,4 +1,3 @@
-import imp
 import sys
 import json
 from os import path
