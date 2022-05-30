@@ -11,6 +11,11 @@ def jres(model: dict, status: int) -> Response:
                     content_type="application/json",
                     status=status)    
 
+def jresNoResponse(model: dict) -> dict:
+    jstr = json.dumps(model).replace("\\", "")
+    jstr = jstr.replace("\"{", "{").replace("}\"", "}")
+    return jstr
+
 class CGMessage:
     def __init__(self, id, from_peer: str, str_content: str):
         self.id_key = "id"

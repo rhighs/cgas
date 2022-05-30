@@ -1,8 +1,12 @@
+from email.mime import base
 from gc import callbacks
 import imp
+
+from attr import attr
+from cloudygram_api_server.models.asyncronous.base_response import BaseResponse
 from cloudygram_api_server.telethon.exceptions import TTUnathorizedException, TTGenericException, TTSignInException, TTFileTransferException
 from telethon.tl.types import Message, MessageMediaDocument, DocumentAttributeFilename, UpdateShortMessage
-from telethon.tl.types import User, InputPeerChat, InputUserSelf, PeerChat, PeerChannel
+from telethon.tl.types import User, InputPeerChat, InputUserSelf, PeerChat, PeerChannel, InputPeerUser
 from telethon.tl.types.messages import AffectedMessages
 import telethon.tl.custom
 from telethon.tl.types.auth import SentCode
@@ -62,7 +66,6 @@ class Client:
     async def __aexit__(self, exc_type, exc_value, exc_tb):
         await self.client.disconnect()
 
-
 async def clean():
     sessions = os.listdir(WORKDIR)
     files = [file for file in sessions if os.path.isfile(
@@ -72,12 +75,10 @@ async def clean():
         if not session_valid(session_name):
             os.remove(WORKDIR + "/" + file)
 
-
 async def session_valid(phone_number: str) -> bool:
     async with Client(phone_number) as client:
         result = await client.get_me()
     return result is not None
-
 
 async def is_authorized(phone_number: str) -> bool:
     async with Client(phone_number) as client:
@@ -85,11 +86,9 @@ async def is_authorized(phone_number: str) -> bool:
         authorized = await client.is_user_authorized()
     return authorized and (me is not None)
 
-
 async def send_private_message(phone_number: str, message: Message):
     async with Client(phone_number) as client:
         await client.send_message(InputUserSelf(), message)
-
 
 async def send_code(phone_number: str) -> str:
     async with Client(phone_number, check_auth=False) as client:
@@ -115,7 +114,6 @@ async def signin(phone_number: str, phone_code_hash: str, phone_code: str, phone
                 raise TTSignInException(str(e))
     return result  #of type User
 
-
 async def signup(phone_number: str, code: str, phone_code_hash: str,
                  first_name: str, last_name: str, phone: str = None) -> User:
     async with Client(phone_number, check_auth=False) as client:
@@ -131,18 +129,15 @@ async def signup(phone_number: str, code: str, phone_code_hash: str,
             raise TTSignInException(str(e))
     return result
 
-
 async def qr_login(phone_number: str):
     async with Client(phone_number, check_auth=False) as client:
         result = await client.qr_login()
     return result
 
-
 async def logout(phone_number: str) -> bool:
     async with Client(phone_number) as client:
         result: bool = await client.log_out()
     return result
-
 
 async def get_me(phone_number: str) -> User:
     async with Client(phone_number) as client:
@@ -191,26 +186,26 @@ async def upload_file(phone_number: str, file_name: str, file_stream: BytesIO, m
 
     return updates.to_json()
 
-
-async def download_file(phone_number: str, message_json: str, file_path: str) -> CgDownloadResult:
+async def download_file(phone_number: str, message: Message, chatid: int, file_path: str) -> CgDownloadResult:
+    path = None
     async with Client(phone_number) as client:
-        media: MessageMediaDocument = parse_updates(message_json)
-        message_id = get_message_id(message_json)
-
         async def try_download():
-            if file_path is not None:
-                await client.download_media(media, file_path)
-            else:
-                await client.download_media(media)
+            message_to_download: Message = await client.get_messages(chatid, ids=message.id)
+            if (message_to_download is None):
+                raise ValueError('Message not found')
+
+            for attribute in message_to_download.media.document.attributes:
+                if isinstance(attribute, DocumentAttributeFilename):
+                    file_name = attribute.file_name
+                    break
+            
+            path = os.path.join(file_path, file_name)
+            await message_to_download.download_media(path)
         try:
             await try_download()
-        except:  # file ref exception, dont care about getting the type
-            ref: bytes = await file_refresh(client, message_id)
-            media.document.file_reference = ref
-            await try_download()
-            return CgDownloadResult(with_new_ref(message_json, ref), True)
-        return CgDownloadResult(message_json, False)
-
+        except Exception as exc:  # file ref exception, dont care about getting the type
+            return BaseResponse(isSuccess=False, message=str(exc))
+        return BaseResponse(isSuccess=True, message=path)
 
 async def download_profile_photo(phone_number: str, filepath: str = None, filename: str = None) -> bool:
     async with Client(phone_number) as client:
@@ -224,19 +219,16 @@ async def download_profile_photo(phone_number: str, filepath: str = None, filena
         download_path = await client.download_profile_photo(InputUserSelf(), file=filepath)
     return download_path == filepath
 
-
 async def get_messages(phone_number: str) -> List:
     async with Client(phone_number) as client:
         result = await client.get_messages(InputUserSelf(), None)
     return result
-
 
 async def delete_messages(phone_number: str, message_ids: List[str], chat_id: str = None) -> AffectedMessages:
     entity = InputPeerChat(chat_id) if chat_id else InputUserSelf()
     async with Client(phone_number) as client:
         result: AffectedMessages = await client.delete_messages(entity, message_ids)
     return result
-
 
 async def get_contacts(phone_number: str) -> str:
     async with Client(phone_number) as client:
@@ -252,7 +244,6 @@ async def get_contacts(phone_number: str) -> str:
 async def file_refresh(client_instance: TelegramClient, message_id: int) -> bytes:
     async for m in client_instance.iter_messages(InputUserSelf(), ids=message_id):
         return m.media.document.file_reference
-
 
 async def upload_file_path(phone_number: str, file_name: str, file_stream: str, mime_type: str):
     async with Client(phone_number) as client:

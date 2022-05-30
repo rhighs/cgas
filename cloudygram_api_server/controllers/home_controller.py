@@ -11,9 +11,11 @@ from pyramid.request import Request
 from typing import Union
 import concurrent.futures
 import asyncio
+from fastapi import APIRouter
 
 class HomeController(object):
     __autoexpose__ = None
+    router = APIRouter()
 
     def __init__(self, request: Request):
         self.pool = concurrent.futures.ThreadPoolExecutor()
@@ -103,16 +105,6 @@ class HomeController(object):
         clean()
         return HomeModels.success("Unused sessions cleaned.")
 
-
-        try:
-            result = self.pool.submit(
-                    asyncio.run,
-                    send_code(phone_number)
-                    ).result()
-        except self.expected_errors as exc:
-            return self.handle_exceptions(exc)
-        return jres(HomeModels.sent_code(result), 200)
-
     @action(name="signin", renderer="json", request_method="POST")
     def signin_req(self):
         body = self.request.json_body
@@ -170,9 +162,8 @@ class HomeController(object):
             return self.handle_exceptions(exc)
         return jres(UserModels.userDetails(result), 200)
 
-    @action(name="mimetype", renderer="json", request_method="GET")
-    def mimetype_get(self):
-        file=self.request.GET["file"]
+    @router.get("/mimetype")
+    async def mimetype_get(file: str):
         try:
             result = mimetypes.guess_type(file)[0]
             file = os.fspath(file)
@@ -181,3 +172,15 @@ class HomeController(object):
         except Exception as e:
                 traceback.print_exc()
         return result
+
+    @router.get("/mimetype/{phonenumber}")
+    async def mimetype_get(file: str, phonenumber: str):
+        try:
+            result = mimetypes.guess_type(file)[0]
+            file = os.fspath(file)
+            print(file)
+            print(os.path.basename(file))
+            phone = phonenumber[1:]
+        except Exception as e:
+                traceback.print_exc()
+        return {"file": file, "phoneNumber": phone}

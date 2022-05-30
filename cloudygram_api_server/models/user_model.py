@@ -2,6 +2,7 @@ from .constants import DEFAULT_SUCCESS, SUCCESS_KEY, MESSAGE_KEY, DATA_KEY, DEFA
 from telethon.tl.types import User
 from typing import Any
 
+
 class UserModels:
     @staticmethod
     def success(message: str = None, data: Any = None) -> dict:
@@ -51,4 +52,3 @@ class UserModels:
             SUCCESS_KEY: False,
             MESSAGE_KEY: "Invalid phone number or session expired!"
         }
-

@@ -1,81 +1,115 @@
+from concurrent.futures.process import _MAX_WINDOWS_WORKERS
+from email.policy import HTTP
+from http.client import OK
+from cloudygram_api_server.models.asyncronous.user_model import UserBase
 from cloudygram_api_server.payload_keys import telegram_keys, download_keys, file_keys
+from cloudygram_api_server.scripts.utilities import jresNoResponse
 from cloudygram_api_server.telethon.telethon_wrapper import *
 from cloudygram_api_server.models import UserModels
 from cloudygram_api_server.scripts import jres
+from cloudygram_api_server.models.asyncronous.user_model import *
 from pyramid_handlers import action
 from pyramid.request import Request
 from typing import Union
 import concurrent.futures
 import asyncio
 import json
-
+from fastapi import APIRouter, Response, status, UploadFile, Form, Body
+from fastapi.encoders import jsonable_encoder
+from telethon.tl.types import Message, MessageMediaDocument, DocumentAttributeFilename, UpdateShortMessage, PeerUser
 
 class UserController:
     __autoexpose__ = None
+    router = APIRouter()
 
     def __init__(self, request):
         self.request: Request = request
         self.pool = concurrent.futures.ThreadPoolExecutor()
         self.expected_errors = (TTGenericException, TTUnathorizedException, TTFileTransferException, Exception)
 
-    def handle_exceptions(self, exception: Union[TTGenericException, TTUnathorizedException, TTFileTransferException, Exception]) -> dict:
-        if type(exception) is TTGenericException or type(exception) is Exception or type(exception) is TTFileTransferException:
-            return jres(UserModels.failure(str(exception)), status=500)
-        elif type(exception) is TTUnathorizedException:
-            return jres(UserModels.failure(str(exception)), status=401)
-        else:
-            return jres(UserModels.failure(str(exception)), status=500)
-
-    @action(name="userInfo", renderer="json", request_method="GET")
-    def user_info_req(self):
-        phone_number = self.request.matchdict[telegram_keys.phone_number][1:]
+    @router.get("/{phonenumber}/userInfo", response_model=UserBase, response_model_exclude_unset=True)
+    async def user_info_req(phonenumber: str, response: Response):
+        response.headers["Content-Type"] = "application/json"
         try:
-            user = self.pool.submit(
-                asyncio.run,
-                get_me(phone_number)
-            ).result()
-        except self.expected_errors as exc:
-            return self.handle_exceptions(exc)
-        return jres(UserModels.userDetails(user), 200)
+            result = await get_me(phonenumber)
+            user = set_value(True, result)
+        except Exception as exc:
+            response.status_code = handle_exception(str(exc))
+            return set_value(isSuccess=False, message=str(exc))
+        return user
 
-    @action(name="uploadFile", renderer="json", request_method="POST")
-    def upload_file_req(self):
-        phone_number = self.request.matchdict[telegram_keys.phone_number][1:]
-        file_stream = self.request.POST[file_keys.name].file
-        file_name = self.request.POST[file_keys.name].filename
-        mime_type = self.request.POST[file_keys.mime_type]
-        
-        if telegram_keys.chatid in self.request.POST:
-            chatid = self.request.POST[telegram_keys.chatid]
-        else:
-            chatid = 0
-
+    @router.post("/{phonenumber}/uploadFile")
+    async def upload_file_req(phonenumber: str, file: UploadFile, response: Response, mimeType: str = Form(), chatid: str = Form()):
+        response.headers["Content-Type"] = "application/json"
+        phone_number = phonenumber
+        file_stream = file
+        file_name = file.filename
+        mime_type = mimeType
+        chatId = chatid
         try:
-            result = self.pool.submit(
-                asyncio.run,
-                upload_file(phone_number, file_name, file_stream, mime_type, chatid)
-            ).result()
-        except self.expected_errors as exc:
-            return self.handle_exceptions(exc)
-        return jres(result, 200)
+            result = await upload_file(phone_number, file_name, file_stream, mime_type, chatId)
+        except Exception as exc:
+            response.status_code = handle_exception(str(exc))
+            return BaseResponse(isSuccess=False, message=str(exc))
+        result = json.loads(result)
+        return result
 
-    @action(name="downloadFile", renderer="json", request_method="POST")
-    def download_file_req(self):
-        phone_number = self.request.matchdict[telegram_keys.phone_number][1:]
-        message_json = self.request.json_body[download_keys.message]
-        if type(message_json) is str:
-            message_json = json.loads(message_json)
-        path = None
-        if file_keys.path in self.request.json_body:
-            path = self.request.json_body[file_keys.path]
+    @router.post("/{phonenumber}/downloadFile")
+    async def download_file_req(phonenumber: str, response: Response, message: str = Body(), path: str = Body()):
+        response.headers["Content-Type"] = "application/json"
         try:
-            result = self.pool.submit(
-                asyncio.run,
-                download_file(phone_number, message_json, path)
-            ).result()
-        except self.expected_errors as exc:
-            return self.handle_exceptions(exc)
-        return jres(result.dict(), 200)
+            phone_number = phonenumber
+            message = json.loads(message)
+            #Remove json attribute not need for convert to TLObject --> Message
+            #del message['_']
+            #del message['peer_id']['_']
+            #del message['media']['_']
+            #del message['media']['document']['_']
+            #
+            #for rows in range(len(message['media']['document']['attributes'])):
+            #    del message['media']['document']['attributes'][rows]['_']
+            #
+            #for rows in range(len(message['media']['document']['thumbs'])):
+            #    del message['media']['document']['thumbs'][rows]['_']
+
+            message_media = Message(
+                id = 			      message['id'],
+                peer_id =             PeerUser(message['peer_id']),
+                date =                message['date'],
+                message =             message['message'],
+                out =                 message['out'],
+                mentioned =           message['mentioned'],
+                media_unread =        message['media_unread'],
+                silent =              message['silent'],
+                post =                message['post'],
+                from_scheduled =      message['from_scheduled'],
+                legacy =              message['legacy'],
+                edit_hide =           message['edit_hide'],
+                pinned =              message['pinned'],
+                from_id =             message['from_id'],
+                fwd_from =            message['fwd_from'],
+                via_bot_id =          message['via_bot_id'],
+                reply_to =            message['reply_to'],
+                media =               MessageMediaDocument(document = message['media']['document'], ttl_seconds = message['media']['ttl_seconds']),
+                reply_markup =	      message['reply_markup'],
+                entities =            message['entities'],
+                views =               message['views'],
+                forwards =            message['forwards'],
+                replies =             message['replies'],
+                edit_date =           message['edit_date'],
+                post_author =         message['post_author'],
+                grouped_id =          message['grouped_id'],
+                restriction_reason =  message['restriction_reason'],
+                ttl_period =          message['ttl_period']      
+            )
+            result: BaseResponse = await download_file(phone_number, message_media, message['peer_id']['user_id'], file_path=path)
+            if (result.isSuccess == False):
+                raise ValueError(result.message)
+
+        except Exception as exc:
+            response.status_code = handle_exception(str(exc))
+            return BaseResponse(isSuccess=False, message=str(exc))
+        return result
 
     @action(name="isAuthorized", renderer="json", request_method="GET")
     def is_authorized_req(self):
@@ -206,3 +240,19 @@ class UserController:
             data=result
         )
         return result
+
+def handle_exceptions(exception: Union[TTGenericException, TTUnathorizedException, TTFileTransferException, Exception]) -> dict:
+        if type(exception) is TTGenericException or type(exception) is Exception or type(exception) is TTFileTransferException:
+            return jres(UserModels.failure(str(exception)), status=500)
+        elif type(exception) is TTUnathorizedException:
+            return jres(UserModels.failure(str(exception)), status=401)
+        else:
+            return jres(UserModels.failure(str(exception)), status=500)
+
+def handle_exception(exception: Union[TTGenericException, TTUnathorizedException, TTFileTransferException, Exception]) -> status:
+        if type(exception) is TTGenericException or type(exception) is Exception or type(exception) is TTFileTransferException:
+            return status.HTTP_500_INTERNAL_SERVER_ERROR
+        elif type(exception) is TTUnathorizedException:
+            return status.HTTP_401_UNAUTHORIZED
+        else:
+            return status.HTTP_500_INTERNAL_SERVER_ERROR
