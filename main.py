@@ -30,7 +30,7 @@ def read_root():
     return {"Hello": "World"}
 
 @app.get("/version")
-def read_root():
+def version():
     return {"version": __version__}
 
 #@app.middleware("http")
