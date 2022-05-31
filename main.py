@@ -4,7 +4,6 @@ from os import path
 import uvicorn
 from cloudygram_api_server.telethon.telethon_wrapper import init_telethon
 from fastapi import FastAPI
-from fastapi.responses import JSONResponse
 from cloudygram_api_server.controllers import HomeController, UserController
 from telethon import __version__
 
@@ -31,11 +30,6 @@ def read_root():
 @app.get("/version")
 def version():
     return {"version": __version__}
-
-#@app.middleware("http")
-#async def add_process_time_header(request: Request, call_next):
-#    response = await call_next(request)
-#    return response
 
 def startup():
     if path.exists(PATH):

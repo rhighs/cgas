@@ -1,13 +1,13 @@
-from concurrent.futures.process import _MAX_WINDOWS_WORKERS
 from email.policy import HTTP
 from http.client import OK
-from cloudygram_api_server.models.asyncronous.user_model import UserBase
+from operator import truediv
+from cloudygram_api_server.models.asyncronous.user_model import *
+from cloudygram_api_server.models.asyncronous.base_response import BaseResponse, BaseResponseData
 from cloudygram_api_server.payload_keys import telegram_keys, download_keys, file_keys
 from cloudygram_api_server.scripts.utilities import jresNoResponse
 from cloudygram_api_server.telethon.telethon_wrapper import *
 from cloudygram_api_server.models import UserModels
 from cloudygram_api_server.scripts import jres
-from cloudygram_api_server.models.asyncronous.user_model import *
 from pyramid_handlers import action
 from pyramid.request import Request
 from typing import Union
@@ -111,50 +111,34 @@ class UserController:
             return BaseResponse(isSuccess=False, message=str(exc))
         return result
 
-    @action(name="isAuthorized", renderer="json", request_method="GET")
-    def is_authorized_req(self):
-        phone_number = self.request.matchdict[telegram_keys.phone_number][1:]
+    @router.get("/{phonenumber}/isAuthorized")
+    async def is_authorized_req(phonenumber: str, response: Response):
+        response.headers["Content-Type"] = "application/json"
         try:
-            result = self.pool.submit(
-                asyncio.run,
-                is_authorized(phone_number)
-            ).result()
-        except self.expected_errors as exc:
-            return self.handle_exceptions(exc)
-        response = (
-            UserModels.success("User is authorized")
-            if result
-            else UserModels.failure("User is not authrized")
-        )
-        return jres(response, 200)
-
-    @action(name="downloadProfilePhoto", renderer="json", request_method="GET")
-    def download_profile_photo_req(self):
-        phone_number = self.request.matchdict[telegram_keys.phone_number][1:]
-        filepath: str = ""
-        filename: str = ""
-        if file_keys.path in self.request.GET:
-            filepath = self.request.GET[file_keys.path]
-        if file_keys.filename in self.request.GET:
-            filename = self.request.GET[file_keys.filename]
-        try:
-            result = self.pool.submit(
-                asyncio.run,
-                download_profile_photo(phone_number, filepath, filename)
-            ).result()
-        except self.expected_errors as exc:
-            return self.handle_exceptions(exc)
-
-        if result is None:
-            response = UserModels.failure(
-                message="User has no profile photo."
-            )
+            result = await is_authorized(phonenumber)
+        except Exception as exc:
+            response.status_code = handle_exception(str(exc))
+            return BaseResponse(isSuccess=False, message=str(exc))
+        if (result):
+            response = BaseResponse(isSuccess=True, message="User is authorizated")
         else:
-            response = UserModels.success(
-                message="Profile photo downloaded.",
-                data=result  # path where the picture got downloaded
-            )
-        return jres(response, 200)
+            response = BaseResponse(isSuccess=False, message="User is NOT authorizated")
+        return response
+
+    @router.get("/{phonenumber}/downloadProfilePhoto")
+    async def download_profile_photo_req(phonenumber: str, response: Response, path: str = None, filename: str = None):
+        response.headers["Content-Type"] = "application/json"
+        try:
+            result = await download_profile_photo(phonenumber, path, filename)
+        except Exception as exc:
+            response.status_code = handle_exception(str(exc))
+            return BaseResponse(isSuccess=False, message=str(exc))
+
+        if result == False:
+            response = BaseResponse(isSuccess=False, message="User has no profile photo")
+        else:
+            response = BaseResponseData(isSuccess=True, message="Profile photo downloaded", data=result)  # path where the picture got downloaded
+        return response
 
     @action(name="contacts", renderer="json", request_method="GET")
     def contacts_req(self):

@@ -214,6 +214,9 @@ async def download_profile_photo(phone_number: str, filepath: str = None, filena
             filepath += me.username
         elif filepath != None and filename is not None:
             filepath += filename
+        elif filepath is None:
+            filepath = os.path.join(os.getcwd(), me.username)
+
         if os.path.exists(filepath): #this helps avoiding duplicate files
             os.remove(filepath)
         download_path = await client.download_profile_photo(InputUserSelf(), file=filepath)
