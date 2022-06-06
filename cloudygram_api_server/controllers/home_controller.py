@@ -55,19 +55,6 @@ class HomeController(object):
             return BaseResponse(isSuccess=False, message=str(exc))
         return set_value(isSuccess=True, UserDetails=result)
 
-    #@action(name="qrLogin", renderer="json", request_method="GET")
-    #def qr_login_req(self):
-    #    phone_number = self.request.GET[telegram_keys.phone_number]
-    #    try:
-    #        result = self.pool.submit(
-    #                asyncio.run,
-    #                qr_login(phone_number)
-    #                ).result()
-    #    except self.expected_errors as exc:
-    #        return self.handle_exceptions(exc)
-    #    self.pool.submit(asyncio.run, result.wait())
-    #    return jres(UserModels.success(data=result.url), 200)
-
     #@action(name="singup", renderer="json", request_method="POST")
     #def sign_up_req(self):
     #    body = self.request.json_body
@@ -117,41 +104,18 @@ class HomeController(object):
             return self.handle_exceptions(exc)
         return jres(UserModels.userDetails(result), 200)
 
-    @action(name="qrLogin", renderer="json", request_method="GET")
-    def qr_login_req(self):
-        phone_number = self.request.GET[telegram_keys.phone_number]
-        try:
-            result = self.pool.submit(
-                    asyncio.run,
-                    qr_login(phone_number)
-                    ).result()
-        except self.expected_errors as exc:
-            return self.handle_exceptions(exc)
-        self.pool.submit(asyncio.run, result.wait())
-        return jres(UserModels.success(data=result.url), 200)
-
-    @action(name="singup", renderer="json", request_method="POST")
-    def sign_up_req(self):
-        body = self.request.json_body
-        phone_number = body[telegram_keys.phone_number]
-        first_name = body[telegram_keys.first_name]
-        last_name = body[telegram_keys.last_name]
-        phone_code = body[telegram_keys.phone_code]
-        phone_code_hash = body[telegram_keys.phone_code_hash]
-        try:
-            result = self.pool.submit(
-                    asyncio.run,
-                    signup(
-                        phone_number,
-                        phone_code,
-                        phone_code_hash,
-                        first_name,
-                        last_name
-                    )
-                ).result()
-        except self.expected_errors as exc:
-            return self.handle_exceptions(exc)
-        return jres(UserModels.userDetails(result), 200)
+    #@action(name="qrLogin", renderer="json", request_method="GET")
+    #def qr_login_req(self):
+    #    phone_number = self.request.GET[telegram_keys.phone_number]
+    #    try:
+    #        result = self.pool.submit(
+    #                asyncio.run,
+    #                qr_login(phone_number)
+    #                ).result()
+    #    except self.expected_errors as exc:
+    #        return self.handle_exceptions(exc)
+    #    self.pool.submit(asyncio.run, result.wait())
+    #    return jres(UserModels.success(data=result.url), 200)
 
     @router.get("/mimetype")
     async def mimetype_get(file: str):
