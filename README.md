@@ -1,17 +1,19 @@
 ## What's this
-Cloudygram-api-server is a basic web server which sole purpose is to serve https://cloudygram.com basic functionalities.
-this way any desired programming language gains access to MTProto Telegram's features, via a fast and reliable python module.
+Cloudygram-api-server is a basic web server which sole purpose is to serve telethon's basic functionalities.
+Think of it as a microservice with a much bigger picture in mind.
+
+For more info about telethon visit [telethon's repo.](https://github.com/LonamiWebs/Telethon)
 
 ## Cloning and running
 ```bash
-$ git clone https://github.com/Maverick1983/cloudygram-api-server
+$ git clone https://github.com/skurob/cloudygram-api-server
 $ cd cloudygram-api-server
 $ pip3 install -r requirements.txt
 $ mkdir sessions
 $ python3 main.py
 ```
 
-Before actually running the application make sure to create a keys.json file in the root folder, containing the following:
+Before actually running the application make sure to create a keys.json file in the project root, containing the following:
 ```json
 {
     "api_id": <your_api_id>,
@@ -21,7 +23,6 @@ Before actually running the application make sure to create a keys.json file in 
 To get your api keys simply go to [my.telegram.org](https://my.telegram.org/auth?to=apps)
 
 # Getting started
-When running the server for the first time, make sure to create a sessions/ folder in the project root directory, this is where telethon will place all the session files for each account you are going to log in.
 
 ## Receive a code
 Path: `/sendCode?phoneNumber=<international_formatted_number>`\
@@ -41,7 +42,8 @@ All you need to do now is calling via the api via POST method, passing a json bo
 {
     "phoneNumber": "<international_formatted_number>",
     "phoneCode": "<the_received_code>",
-    "phoneCodeHash": "<from_the_previous_request>"
+    "phoneCodeHash": "<from_the_previous_request>",
+    "password": "<2FA_password>|<empty>"
 }
 ```
 If everything ran smoothly you will receive a positive response and a telegram notification, telling you successfully logged via the cloudygram-api-server.
@@ -52,15 +54,11 @@ Just a simple GET request
 
 js example:
 ```js
-const url = "http://127.0.0.1:5000/user/+39XXXXXXX/userInfo";
-const get_user_info = async (url) => {
-    return await fetch(url, { method: "GET" })
-        .then(async res => {
-            return await res.json();
-        });
-}
+const url = "http://127.0.0.1:5000/user/+393421323295/userInfo";
+const getUserInfo = (url) => fetch(url, { method: "GET" })
+                           .then(res => res.json());
 
-console.log(await get_user_info(url));
+console.log(await getUserInfo(url));
 
 /*
 {
@@ -68,7 +66,7 @@ console.log(await get_user_info(url));
     "username": "foobar",
     "firstName": "foo",
     "lastName": "bar",
-    "phoneNumber": +39XXXXXXX
+    "phoneNumber": +393421323295
 }
 */
 ```
@@ -102,7 +100,7 @@ yourself into annoying errors, I've provided two api calls in which you can chec
 state of a session, and eventually clean all the non-valid sessions handled by the server.
 To do this you can use the following resources.
 
-`GET /user/<international_formatted_number>/sessionValid` "is this specific session valid?".\
+`GET /user/<international_formatted_number>/sessionValid` "is this session valid?".\
 `DELETE /cleanSessions` deletes all non-valid sessions.
 
 These resources always return a json object with a bool field `isSuccess`.

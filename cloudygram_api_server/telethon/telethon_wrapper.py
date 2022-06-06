@@ -1,18 +1,16 @@
-from gc import callbacks
-import imp
-from cloudygram_api_server.telethon.exceptions import TTUnathorizedException, TTGenericException, TTSignInException, TTFileTransferException
+from cloudygram_api_server.telethon.exceptions import TTNeeds2FAException, TTUnathorizedException, TTGenericException, TTSignInException, TTFileTransferException
 from telethon.tl.types import Message, MessageMediaDocument, DocumentAttributeFilename, UpdateShortMessage
-from telethon.tl.types import User, InputPeerChat, InputUserSelf, PeerChat, PeerChannel
+from telethon.tl.types import User, InputPeerChat, InputUserSelf
 from telethon.tl.types.messages import AffectedMessages
+from telethon.errors import SessionPasswordNeededError
 from telethon.tl.types.auth import SentCode
 from telethon.tl import functions, types
 from telethon import TelegramClient
 from .parser import parse_updates, get_message_id, with_new_ref
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 from pathlib import Path
 from io import BytesIO
 import os
-from cloudygram_api_server.scripts.utilities import Progress
 
 WORKDIR = ""
 API_ID = ""
@@ -100,7 +98,9 @@ async def send_code(phone_number: str) -> str:
 async def signin(phone_number: str, phone_code_hash: str, phone_code: str, phone_password: str) -> User:
     async with Client(phone_number, check_auth=False) as client:
         try:
-            result: User = await client.sign_in(phone_number, phone_code, phone_code_hash=phone_code_hash)
+            result: User = await client.sign_in(phone_number, phone_code, phone_code_hash=phone_code_hash, password=phone_password)
+        except SessionPasswordNeededError:
+            raise TTNeeds2FAException()
         except Exception as e:
             message = TTSignInException(str(e))
             try:
@@ -147,45 +147,32 @@ async def get_me(phone_number: str) -> User:
     return result
 
 
-async def upload_file(phone_number: str, file_name: str, file_stream: BytesIO, mime_type: str, chatid: int = 0):
+async def upload_file(phone_number: str, file_name: str, file_stream: BytesIO, mime_type: str):
     async with Client(phone_number) as client:
-        if (chatid == 0):
-            uploaded_file = await client.upload_file(file=file_stream)
-        
-            me: User = await client.get_me()
+        uploaded_file = await client.upload_file(file=file_stream)
+        me: User = await client.get_me()
+        media = types.InputMediaUploadedDocument(
+            file=uploaded_file,
+            stickers=[types.InputDocument(
+                id=uploaded_file.id,
+                access_hash=uploaded_file.id,
+                file_reference=INITIAL_FILE_REF
+            )],
+            ttl_seconds=100,
+            mime_type=mime_type,
+            attributes=[
+                DocumentAttributeFilename(file_name)
+            ]
+        )
 
-            media = types.InputMediaUploadedDocument(
-                file=uploaded_file,
-                stickers=[types.InputDocument(
-                    id=uploaded_file.id,
-                    access_hash=uploaded_file.id,
-                    file_reference=INITIAL_FILE_REF
-                )],
-                ttl_seconds=100,
-                mime_type=mime_type,
-                attributes=[
-                    DocumentAttributeFilename(file_name)
-                ]
-            )
-
-            try:
-                updates: UpdateShortMessage = await client(functions.messages.SendMediaRequest(
-                    peer=me,
-                    media=media,
-                    message="document id: " + str(media.stickers[0].id)
-                ))
-            except Exception as e:
-                raise TTFileTransferException(str(e))
-        else:
-            try:
-                updates: Message = await client.send_file(entity = int(chatid), 
-                        file=file_stream, 
-                        attributes=[DocumentAttributeFilename(file_name)],
-                        progress_callback=Progress.callbackUpload)
-            except Exception as e:
-                print ("errore send_file")
-                raise TTFileTransferException(str(e))
-
+        try:
+            updates: UpdateShortMessage = await client(functions.messages.SendMediaRequest(
+                peer=me,
+                media=media,
+                message="document id: " + str(media.stickers[0].id)
+            ))
+        except Exception as e:
+            raise TTFileTransferException(str(e))
     return updates.to_json()
 
 
@@ -250,39 +237,3 @@ async def file_refresh(client_instance: TelegramClient, message_id: int) -> byte
     async for m in client_instance.iter_messages(InputUserSelf(), ids=message_id):
         return m.media.document.file_reference
 
-
-async def upload_file_path(phone_number: str, file_name: str, file_stream: str, mime_type: str):
-    async with Client(phone_number) as client:
-        uploaded_file = await client.upload_file(file=file_stream)
-        me: User = await client.get_me()
-        media = types.InputMediaUploadedDocument(
-            file=uploaded_file,
-            stickers=[types.InputDocument(
-                id=uploaded_file.id,
-                access_hash=uploaded_file.id,
-                file_reference=INITIAL_FILE_REF
-            )],
-            ttl_seconds=100,
-            mime_type=mime_type,
-            attributes=[
-                DocumentAttributeFilename(file_name)
-            ]
-        )
-
-        try:
-            updates: UpdateShortMessage = await client(functions.messages.SendMediaRequest(
-                peer=me,
-                media=media,
-                message="document id: " + str(media.stickers[0].id)
-            ))
-        except Exception as e:
-            raise TTFileTransferException(str(e))
-    return updates.to_json()
-
-async def get_dialog(phone_number: str) -> str:
-    async with Client(phone_number) as client:
-        if (await client.get_me()).bot:
-            await client.disconnect()
-            raise TTUnathorizedException()
-        result = await client.get_dialogs()
-    return result

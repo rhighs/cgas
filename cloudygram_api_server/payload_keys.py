@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 telegram_keys = SimpleNamespace()
 download_keys = SimpleNamespace()
-file_keys= SimpleNamespace()
+file_keys = SimpleNamespace()
 
 telegram_keys.phone_code_hash = "phoneCodeHash"
 telegram_keys.phone_number = "phoneNumber"
@@ -10,7 +10,6 @@ telegram_keys.first_name = "firstName"
 telegram_keys.last_name = "lastName"
 telegram_keys.phone_code = "phoneCode"
 telegram_keys.phone_password = "password"
-telegram_keys.chatid = "chatid"
 
 file_keys.mime_type= "mimeType"
 file_keys.path = "path"
