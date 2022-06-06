@@ -224,7 +224,7 @@ async def download_profile_photo(phone_number: str, filepath: str = None, filena
 
 async def get_messages(phone_number: str) -> List:
     async with Client(phone_number) as client:
-        result = await client.get_messages(InputUserSelf(), None)
+        result = await client.iter_messages(InputUserSelf(), None)
     return result
 
 async def delete_messages(phone_number: str, message_ids: List[str], chat_id: str = None) -> AffectedMessages:
@@ -276,10 +276,12 @@ async def upload_file_path(phone_number: str, file_name: str, file_stream: str, 
             raise TTFileTransferException(str(e))
     return updates.to_json()
 
-async def get_dialog(phone_number: str) -> str:
+async def get_dialog(phone_number: str) -> dict:
     async with Client(phone_number) as client:
         if (await client.get_me()).bot:
             await client.disconnect()
             raise TTUnathorizedException()
-        result = await client.get_dialogs()
+        result = []
+        async for dialog in client.iter_dialogs(archived=False):
+            result.append({'id': dialog.id, 'title': dialog.title})
     return result

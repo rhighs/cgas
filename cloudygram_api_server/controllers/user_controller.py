@@ -8,22 +8,18 @@ from cloudygram_api_server.scripts.utilities import jresNoResponse
 from cloudygram_api_server.telethon.telethon_wrapper import *
 from cloudygram_api_server.models import UserModels
 from cloudygram_api_server.scripts import jres
-from pyramid_handlers import action
-from pyramid.request import Request
 from typing import Union
 import concurrent.futures
-import asyncio
 import json
 from fastapi import APIRouter, Response, status, UploadFile, Form, Body
 from fastapi.encoders import jsonable_encoder
-from telethon.tl.types import Message, MessageMediaDocument, DocumentAttributeFilename, UpdateShortMessage, PeerUser
+from telethon.tl.types import Message, MessageMediaDocument, PeerUser
 
 class UserController:
     __autoexpose__ = None
     router = APIRouter()
 
-    def __init__(self, request):
-        self.request: Request = request
+    def __init__(self):
         self.pool = concurrent.futures.ThreadPoolExecutor()
         self.expected_errors = (TTGenericException, TTUnathorizedException, TTFileTransferException, Exception)
 
@@ -148,26 +144,20 @@ class UserController:
         except Exception as exc:
             response.status_code = handle_exception(str(exc))
             return BaseResponse(isSuccess=False, message=str(exc))
-        response = BaseResponseData(isSuccess=True, data=result)
+        response = BaseResponse(isSuccess=True, message=result)
         return response
 
-    @action(name="logout", renderer="json", request_method="DELETE")
-    def logout_req(self):
-        phone_number = self.request.matchdict[telegram_keys.phone_number][1:]
+    @router.delete("/{phonenumber}/logout")
+    async def logout_req(phonenumber: str, response: Response):
         try:
-            result = self.pool.submit(
-                asyncio.run,
-                logout(phone_number)
-            ).result()
-        except self.expected_errors as exc:
-            return self.handle_exceptions(exc)
+            result = await logout(phonenumber)
+        except Exception as exc:
+             response.status_code = handle_exception(str(exc))
+             return BaseResponse(isSuccess=False, message=str(exc))
         if not result:
-            return jres(UserModels.failure(message="Can't log out"), 200)
-        response = UserModels.success(
-            message="Log out successful.",
-            data=result
-        )
-        return jres(response, 200)
+            return BaseResponse(isSuccess=False, message="Can't log out")
+        response = BaseResponseData(isSuccess=False, message="Log out successful.", data=result)
+        return response
 
     @router.get("/{phonenumber}/sessionValid")
     async def session_valid_req(phonenumber: str, response: Response):
@@ -190,8 +180,7 @@ class UserController:
         except Exception as exc:
             response.status_code = handle_exception(str(exc))
             return BaseResponse(isSuccess=False, message=str(exc))
-        response = BaseResponse(isSuccess=True, message=result)
-        return result
+        return BaseResponse(isSuccess=True, message=json.dumps(result))
 
 def handle_exceptions(exception: Union[TTGenericException, TTUnathorizedException, TTFileTransferException, Exception]) -> dict:
         if type(exception) is TTGenericException or type(exception) is Exception or type(exception) is TTFileTransferException:

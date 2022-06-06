@@ -2,6 +2,7 @@ import sys
 import json
 from os import path
 import uvicorn
+from cloudygram_api_server.controllers.messages_controller import MessagesController
 from cloudygram_api_server.telethon.telethon_wrapper import init_telethon
 from fastapi import FastAPI
 from cloudygram_api_server.controllers import HomeController, UserController
@@ -21,6 +22,12 @@ app.include_router(
     UserController.router,
     prefix="/user",
     tags=["User"],
+)
+
+app.include_router(
+    MessagesController.router,
+    prefix="/user/messages",
+    tags=["Messages"],
 )
 
 @app.get("/")
