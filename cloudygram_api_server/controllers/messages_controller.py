@@ -6,9 +6,12 @@ from pyramid_handlers import action
 from pyramid.request import Request
 import asyncio, concurrent.futures
 from typing import List, Union
-
+from cloudygram_api_server.models.asyncronous.base_response import BaseResponse, BaseResponseData
+from fastapi import APIRouter, Response, status, UploadFile, Form, Body
+from fastapi.encoders import jsonable_encoder
 
 class MessagesController(object):
+    router = APIRouter()
     __autoexpose__ = None
 
     def __init__(self, request: Request):
@@ -16,36 +19,38 @@ class MessagesController(object):
         self.pool = concurrent.futures.ThreadPoolExecutor()
         self.expected_errors = (TTGenericException, TTUnathorizedException, Exception)
 
-    def handle_exceptions(self, exception: Union[TTGenericException, TTUnathorizedException, Exception]) -> dict:
-        if type(exception) is TTGenericException or type(exception) is Exception:
-            return jres(UserModels.failure(str(exception)), status=500)
+    @router.get("/{phonenumber}/getMessages")
+    async def get_messages_req(phonenumber: str, response: Response):
+        try:
+            result = await get_messages(phonenumber)
+        except Exception as exc:
+            response.status_code = handle_exception(str(exc))
+            return BaseResponse(isSuccess=False, message=str(exc))
+        return BaseResponse(isSuccess=False, message=result)
+
+    @router.post("/{phonenumber}/deleteMessages")
+    async def delete_messages_req(phonenumber: str, response: Response, ids: List[str] = Body()):
+        message_ids = ids
+        try:
+            await delete_messages(phonenumber, message_ids)
+        except Exception as exc:
+            response.status_code = handle_exception(str(exc))
+            return BaseResponse(isSuccess=False, message=str(exc))
+        return BaseResponse(isSuccess=True)
+
+
+def handle_exceptions(self, exception: Union[TTGenericException, TTUnathorizedException, Exception]) -> dict:
+    if type(exception) is TTGenericException or type(exception) is Exception:
+        return jres(UserModels.failure(str(exception)), status=500)
+    elif type(exception) is TTUnathorizedException:
+        return jres(UserModels.failure(str(exception)), status=401)
+    else:
+        return jres(UserModels.failure(str(exception)), status=500)
+
+def handle_exception(exception: Union[TTGenericException, TTUnathorizedException, TTFileTransferException, Exception]) -> status:
+        if type(exception) is TTGenericException or type(exception) is Exception or type(exception) is TTFileTransferException:
+            return status.HTTP_500_INTERNAL_SERVER_ERROR
         elif type(exception) is TTUnathorizedException:
-            return jres(UserModels.failure(str(exception)), status=401)
+            return status.HTTP_401_UNAUTHORIZED
         else:
-            return jres(UserModels.failure(str(exception)), status=500)
-
-    @action(name="getMessages", renderer="json", request_method="GET")
-    def get_messages_req(self):
-        phone_number: str = self.request.matchdict["phoneNumber"][1:]
-        try:
-            result = self.pool.submit(
-                    asyncio.run,
-                    get_messages(phone_number)
-                    ).result()
-        except self.expected_errors as exc:
-            return self.handle_exceptions(exc)
-        return jres(TtModels.message_list(result), status=200)
-
-    @action(name="deleteMessages", renderer="json", request_method="POST")
-    def delete_messages_req(self):
-        phone_number: str = self.request.matchdict["phoneNumber"][1:]
-        message_ids: List[str] = self.request.json_body["ids"]
-        try:
-            self.pool.submit(
-                asyncio.run,
-                delete_messages(phone_number, message_ids)
-            ).result()
-        except self.expected_errors as exc:
-            return self.handle_exceptions(exc)
-        return jres(UserModels.success(), status=200)
-
+            return status.HTTP_500_INTERNAL_SERVER_ERROR
