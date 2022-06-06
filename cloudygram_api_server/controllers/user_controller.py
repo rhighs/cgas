@@ -129,32 +129,27 @@ class UserController:
     async def download_profile_photo_req(phonenumber: str, response: Response, path: str = None, filename: str = None):
         response.headers["Content-Type"] = "application/json"
         try:
-            result = await download_profile_photo(phonenumber, path, filename)
+            result: BaseResponse = await download_profile_photo(phonenumber, path, filename)
         except Exception as exc:
             response.status_code = handle_exception(str(exc))
             return BaseResponse(isSuccess=False, message=str(exc))
 
-        if result == False:
+        if result.isSuccess == False:
             response = BaseResponse(isSuccess=False, message="User has no profile photo")
         else:
-            response = BaseResponseData(isSuccess=True, message="Profile photo downloaded", data=result)  # path where the picture got downloaded
+            response = BaseResponseData(isSuccess=True, message="Profile photo downloaded", data=result.message)  # path where the picture got downloaded
         return response
 
-    @action(name="contacts", renderer="json", request_method="GET")
-    def contacts_req(self):
-        phone_number = self.request.matchdict[telegram_keys.phone_number][1:]
+    @router.get("/{phonenumber}/contacts")
+    async def contacts_req(phonenumber: str, response: Response):
+        response.headers["Content-Type"] = "application/json"
         try:
-            result = self.pool.submit(
-                asyncio.run,
-                get_contacts(phone_number)
-            ).result()
-        except self.expected_errors as exc:
-            return self.handle_exceptions(exc)
-        response = UserModels.success(
-            message="Contacts fetched.",
-            data=result
-        )
-        return jres(response, 200)
+            result = await get_contacts(phonenumber)
+        except Exception as exc:
+            response.status_code = handle_exception(str(exc))
+            return BaseResponse(isSuccess=False, message=str(exc))
+        response = BaseResponseData(isSuccess=True, data=result)
+        return response
 
     @action(name="logout", renderer="json", request_method="DELETE")
     def logout_req(self):
@@ -167,62 +162,35 @@ class UserController:
         except self.expected_errors as exc:
             return self.handle_exceptions(exc)
         if not result:
-            return jres(UserModels.failure(message="Clouldn't log out"), 200)
+            return jres(UserModels.failure(message="Can't log out"), 200)
         response = UserModels.success(
             message="Log out successful.",
             data=result
         )
         return jres(response, 200)
 
-    @action(name="sessionValid", renderer="json", request_method="GET")
-    def session_valid_req(self):
-        phone_number = self.request.matchdict[telegram_keys.phone_number][1:]
+    @router.get("/{phonenumber}/sessionValid")
+    async def session_valid_req(phonenumber: str, response: Response):
+        response.headers["Content-Type"] = "application/json"
         try:
-            result = self.pool.submit(
-                asyncio.run,
-                session_valid(phone_number)
-            ).result()
-        except self.expected_errors as exc:
-            return self.handle_exceptions(exc)
+            result = await session_valid(phonenumber)
+        except Exception as exc:
+            response.status_code = handle_exception(str(exc))
+            return BaseResponse(isSuccess=False, message=str(exc))
         if result:
-            response = UserModels.success(
-                message="Session is still valid."
-            )
+            response = BaseResponse(isSuccess=True, message="Session is still valid")
         else:
-            response = UserModels.failure(
-                message="Session is not valid."
-            )
-        return jres(response, 200)
+            response = BaseResponse(isSuccess=False, message="Session is not valid")
+        return response
 
-    @action(name="uploadFilePath", renderer="json", request_method="POST")
-    def upload_file_path(self):
-        phone_number = self.request.matchdict[telegram_keys.phone_number][1:]
-        file_stream = self.request.POST[file_keys.path]
-        file_name = self.request.POST[file_keys.filename]
-        mime_type = self.request.POST[file_keys.mime_type]
+    @router.get("/{phonenumber}/dialogs")
+    async def contacts_req(phonenumber: str, response: Response):
         try:
-            result = self.pool.submit(
-                asyncio.run,
-                upload_file_path(phone_number, file_name, file_stream, mime_type)
-            ).result()
-        except self.expected_errors as exc:
-            return self.handle_exceptions(exc)
-        return jres(result, 200)
-
-    @action(name="dialogs", renderer="json", request_method="GET")
-    def contacts_req(self):
-        phone_number = self.request.matchdict[telegram_keys.phone_number][1:]
-        try:
-            result = self.pool.submit(
-                asyncio.run,
-                get_dialog(phone_number)
-            ).result()
-        except self.expected_errors as exc:
-            return self.handle_exceptions(exc)
-        response = UserModels.success(
-            message="Ok",
-            data=result
-        )
+            result = await get_dialog(phonenumber)
+        except Exception as exc:
+            response.status_code = handle_exception(str(exc))
+            return BaseResponse(isSuccess=False, message=str(exc))
+        response = BaseResponse(isSuccess=True, message=result)
         return result
 
 def handle_exceptions(exception: Union[TTGenericException, TTUnathorizedException, TTFileTransferException, Exception]) -> dict:

@@ -207,7 +207,7 @@ async def download_file(phone_number: str, message: Message, chatid: int, file_p
             return BaseResponse(isSuccess=False, message=str(exc))
         return BaseResponse(isSuccess=True, message=path)
 
-async def download_profile_photo(phone_number: str, filepath: str = None, filename: str = None) -> bool:
+async def download_profile_photo(phone_number: str, filepath: str = None, filename: str = None) -> BaseResponse:
     async with Client(phone_number) as client:
         me: User = await client.get_me()
         if filepath != None and filename is None:
@@ -215,12 +215,12 @@ async def download_profile_photo(phone_number: str, filepath: str = None, filena
         elif filepath != None and filename is not None:
             filepath += filename
         elif filepath is None:
-            filepath = os.path.join(os.getcwd(), me.username)
+            filepath = os.path.join(os.getcwd(), me.username + '.jpg')
 
         if os.path.exists(filepath): #this helps avoiding duplicate files
             os.remove(filepath)
         download_path = await client.download_profile_photo(InputUserSelf(), file=filepath)
-    return download_path == filepath
+    return BaseResponse(isSuccess=download_path == filepath, message=download_path)
 
 async def get_messages(phone_number: str) -> List:
     async with Client(phone_number) as client:
