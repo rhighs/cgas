@@ -1,13 +1,15 @@
+.vs
+sessions*
+*.sln
+*.pyproj
+*.code-workspace*
 workspace*
-#for include /telethon/ folder inside virtuale env .Telegram
-.Telegram
-##
 *.bat
 upload
 keys.json
 *.session
 .vscode/
-./example/test
+example/
 todo.txt
 
 __pycache__/
@@ -145,3 +147,4 @@ dmypy.json
 .pytype/
 # Cython debug symbols
 cython_debug/*.session
+.vs/cloudygram-api-server/v17
