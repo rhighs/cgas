@@ -1,4 +1,4 @@
-from telethon.tl.types import MessageMediaDocument, Document
+from telethon.tl.types import MessageMediaDocument, Document, UpdateNewMessage, UpdateMessageID, Updates, PeerUser, Message
 from base64 import encodebytes, decodebytes
 from typing import Union
 import json
@@ -63,16 +63,11 @@ def with_new_ref(message_dict: dict, ref: bytes) -> dict:
     message_dict["updates"][1]["message"]["media"]["document"]["file_reference"] = encodebytes(ref).decode()
     return message_dict
 
-"""
-I'll leave this here in case of future implementations, i know it's something
-that will most certainly turn out to be useless, but i have faith in someone to need
-the entire message object. 
-
-from telethon.tl.types import UpdateNewMessage, UpdateMessageID, Updates, PeerUser, UpdateReadHistoryInbox, Message
 
 def __parse_updates(update_json) -> Updates:
     if type(update_json) is str:
         return str_parse_updates(update_json)
+
     update_dict: dict = update_json["udpates"][1]
     message_json = update_dict["message"]
     media_dict: dict = message_json["media"]
@@ -80,7 +75,7 @@ def __parse_updates(update_json) -> Updates:
     up_msg_id  = UpdateMessageID(
             id = update_json["updates"][0]["id"],
             random_id = update_json["updates"][0]["random_id"],
-        )
+    )
 
     msg_obj = Message(
             id =            up_msg_id.id,
@@ -123,9 +118,6 @@ def __parse_updates(update_json) -> Updates:
             #others default to null
             )
 
-    up_read_header = UpdateReadHeader(
-            )
-
     updates = [
             up_msg_id,
             up_new_msg,
@@ -138,5 +130,3 @@ def __parse_updates(update_json) -> Updates:
             None,
             None
             )
-
-"""
