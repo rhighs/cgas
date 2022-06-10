@@ -233,15 +233,16 @@ async def delete_messages(phone_number: str, message_ids: List[str], chat_id: st
         result: AffectedMessages = await client.delete_messages(entity, message_ids)
     return result
 
-async def get_contacts(phone_number: str) -> str:
+async def get_contacts(phone_number: str) -> dict:
     async with Client(phone_number) as client:
         if (await client.get_me()).bot:
             await client.disconnect()
             raise TTUnathorizedException()
-        result = await client(functions.contacts.GetContactsRequest(
-            hash=0
-        ))
-    return result.stringify()
+        contact = await client(functions.contacts.GetContactsRequest(hash=0))
+        result = []
+        for user in contact.users:
+            result.append({"id": user.id, "first_name": user.first_name, "last_name": user.last_name, "phone_number": user.phone})
+    return result
 
 
 async def file_refresh(client_instance: TelegramClient, message_id: int) -> bytes:

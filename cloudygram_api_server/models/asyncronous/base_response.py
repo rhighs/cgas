@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ClassError
 from typing import Optional
 
 class BaseResponse(BaseModel):

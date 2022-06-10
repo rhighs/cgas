@@ -136,8 +136,7 @@ class UserController:
         except Exception as exc:
             response.status_code = handle_exception(str(exc))
             return BaseResponse(isSuccess=False, message=str(exc))
-        response = BaseResponse(isSuccess=True, message=result)
-        return response
+        return {"isSuccess":True, "data":result}
 
     @router.delete("/{phonenumber}/logout")
     async def logout_req(phonenumber: str, response: Response):
@@ -172,7 +171,7 @@ class UserController:
         except Exception as exc:
             response.status_code = handle_exception(str(exc))
             return BaseResponse(isSuccess=False, message=str(exc))
-        return BaseResponse(isSuccess=True, message=json.dumps(result))
+        return {"isSuccess":True, "data":result}
 
 def handle_exception(exception: Union[TTGenericException, TTUnathorizedException, TTFileTransferException, Exception]) -> status:
         if type(exception) is TTGenericException or type(exception) is Exception or type(exception) is TTFileTransferException:
