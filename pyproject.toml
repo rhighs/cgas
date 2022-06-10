@@ -7,9 +7,8 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.7"
-pyramid = "2.0"
-pyramid_handlers = "0.5"
 telethon = "^1.24"
+fastapi = "^0.77.0"
 
 [tool.poetry.dev-dependencies]
 
