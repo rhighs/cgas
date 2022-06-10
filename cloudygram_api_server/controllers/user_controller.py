@@ -4,12 +4,8 @@ from operator import truediv
 from cloudygram_api_server.models.asyncronous.user_model import *
 from cloudygram_api_server.models.asyncronous.base_response import BaseResponse, BaseResponseData
 from cloudygram_api_server.payload_keys import telegram_keys, download_keys, file_keys
-from cloudygram_api_server.scripts.utilities import jresNoResponse
 from cloudygram_api_server.telethon.telethon_wrapper import *
-from cloudygram_api_server.models import UserModels
-from cloudygram_api_server.scripts import jres
 from typing import Union
-import concurrent.futures
 import json
 from fastapi import APIRouter, Response, status, UploadFile, Form, Body
 from fastapi.encoders import jsonable_encoder
@@ -18,10 +14,6 @@ from telethon.tl.types import Message, MessageMediaDocument, PeerUser
 class UserController:
     __autoexpose__ = None
     router = APIRouter()
-
-    def __init__(self):
-        self.pool = concurrent.futures.ThreadPoolExecutor()
-        self.expected_errors = (TTGenericException, TTUnathorizedException, TTFileTransferException, Exception)
 
     @router.get("/{phonenumber}/userInfo", response_model=UserBase, response_model_exclude_unset=True)
     async def user_info_req(phonenumber: str, response: Response):
@@ -144,8 +136,7 @@ class UserController:
         except Exception as exc:
             response.status_code = handle_exception(str(exc))
             return BaseResponse(isSuccess=False, message=str(exc))
-        response = BaseResponse(isSuccess=True, message=result)
-        return response
+        return {"isSuccess":True, "data":result}
 
     @router.delete("/{phonenumber}/logout")
     async def logout_req(phonenumber: str, response: Response):
@@ -180,15 +171,7 @@ class UserController:
         except Exception as exc:
             response.status_code = handle_exception(str(exc))
             return BaseResponse(isSuccess=False, message=str(exc))
-        return BaseResponse(isSuccess=True, message=json.dumps(result))
-
-def handle_exceptions(exception: Union[TTGenericException, TTUnathorizedException, TTFileTransferException, Exception]) -> dict:
-        if type(exception) is TTGenericException or type(exception) is Exception or type(exception) is TTFileTransferException:
-            return jres(UserModels.failure(str(exception)), status=500)
-        elif type(exception) is TTUnathorizedException:
-            return jres(UserModels.failure(str(exception)), status=401)
-        else:
-            return jres(UserModels.failure(str(exception)), status=500)
+        return {"isSuccess":True, "data":result}
 
 def handle_exception(exception: Union[TTGenericException, TTUnathorizedException, TTFileTransferException, Exception]) -> status:
         if type(exception) is TTGenericException or type(exception) is Exception or type(exception) is TTFileTransferException:
