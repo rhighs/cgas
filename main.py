@@ -14,7 +14,7 @@ app = FastAPI()
 
 app.include_router(
     HomeController.router,
-    prefix="/home",
+    prefix="",
     tags=["Home"],
 )
 

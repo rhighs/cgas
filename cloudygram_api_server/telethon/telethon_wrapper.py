@@ -17,7 +17,7 @@ from typing import List, Tuple
 from pathlib import Path
 from io import BytesIO
 import os
-from cloudygram_api_server.scripts.utilities import Progress
+#from cloudygram_api_server.scripts.utilities import Progress
 import traceback
 import sys
 
