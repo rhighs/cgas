@@ -46,12 +46,15 @@ def startup():
         print("File keys.json: You must insert api_id!")
         exit(1)
 
+<<<<<<< HEAD
     # Ensure sessions folder is created
     if not path.exists("./sessions"):
         makedirs("./sessions")
 
     app = ApiServer(data["api_id"], data["api_hash"], port=5000, host_ip="0.0.0.0")
     app.run()
+=======
+>>>>>>> Maverick1983-async
     init_telethon(data["api_id"], data["api_hash"])
 
 if __name__ == "__main__":
